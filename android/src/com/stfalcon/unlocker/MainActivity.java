@@ -16,6 +16,7 @@ import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.GraphViewSeries;
 import com.jjoe64.graphview.LineGraphView;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 public class MainActivity extends Activity implements SensorEventListener {
@@ -67,7 +68,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                saveDataList = new ArrayList<double[]>();
+                saveDataList.clear();
                 startTime = System.currentTimeMillis();
                 accDataList.clear();
                 gyrDataList.clear();
@@ -80,13 +81,11 @@ public class MainActivity extends Activity implements SensorEventListener {
         compar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                saveDataList.addAll(filterDataList);
                 startTime = System.currentTimeMillis();
                 accDataList.clear();
                 gyrDataList.clear();
                 filterDataList.clear();
                 isSensorOn = true;
-
             }
         });
 
@@ -187,7 +186,7 @@ public class MainActivity extends Activity implements SensorEventListener {
                 rollGraphViewsaveData[i] = new GraphView.GraphViewData(i, saveDataList.get(i)[1]);
             }
             pitchsaveDataSeries = new GraphViewSeries("pitch1", new GraphViewSeries.GraphViewSeriesStyle(Color.GREEN, 2), pitchGraphViewsaveData);
-            rollsaveDataSeries = new GraphViewSeries("roll1", new GraphViewSeries.GraphViewSeriesStyle(Color.GREEN, 2), rollGraphViewsaveData);
+            rollsaveDataSeries = new GraphViewSeries("roll1", new GraphViewSeries.GraphViewSeriesStyle(Color.YELLOW, 2), rollGraphViewsaveData);
         }
 
         GraphView graphView = new LineGraphView(
@@ -202,17 +201,22 @@ public class MainActivity extends Activity implements SensorEventListener {
             double[] x = new double[filterDataList.size()];
             double[] x1 = new double[saveDataList.size()];
             double[] mass;
-            for (int i = 0; i < filterDataList.size(); i++){
+            for (int i = 0; i < filterDataList.size(); i++) {
                 mass = filterDataList.get(i);
                 x[i] = mass[0];
             }
-            for (int i = 0; i < saveDataList.size(); i++){
+            for (int i = 0; i < saveDataList.size(); i++) {
                 mass = saveDataList.get(i);
                 x1[i] = mass[0];
             }
-            proc.setText(String.valueOf(Comparison.comparisonArray(x,x1)) + "%");
+            double pirsonKoef = Comparison.pirsonCompare(x, x1);
+            boolean unlock = pirsonKoef > 0.6;
+            proc.setText("Unlock: " + unlock + " " + "compare = " + new DecimalFormat("#.##").format(pirsonKoef));
         }
         layout.addView(graphView);
+        if (!(saveDataList.size() > 0)) {
+            saveDataList.addAll(filterDataList);
+        }
     }
 
     @Override
