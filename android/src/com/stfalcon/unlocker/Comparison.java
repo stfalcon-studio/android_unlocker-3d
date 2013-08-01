@@ -7,30 +7,30 @@ import java.util.TreeSet;
  */
 public class Comparison {
 
-    private static final int smoothing = 10;
+    private static final double smoothing = 0.05;
 
 
-    public static boolean comparisonArray(int[] a, int[] a1){
-        int point = a[0];
-        int point1 = a1[0];
-        int dx = Math.abs(a[0] - a1[0]);
+    public static boolean comparisonArray(double[] a, double[] a1){
+        double point = a[0];
+        double point1 = a1[0];
+        double dx = Math.abs(a[0] - a1[0]);
 
         if (a[0] <= a1[0]) point = point + dx;
         if (a[0] > a1[0]) point = point - dx;
 
-        if (makeHashSet(a1[0]).contains(new Integer(point))){
+        if (makeHashSet(a1[0]).contains(new Double(point))){
             for (int i = 0; i < a1.length; i++){
                 if (a[0] <= a1[0]) point = a[i] + dx;
                 if (a[0] > a1[0]) point = a[i] - dx;
-                if (makeHashSet(a1[i]).contains(new Integer(point))) return false;
+                if (makeHashSet(a1[i]).contains(new Double(point))) return false;
             }
         }
             return true;
     }
 
-    private static TreeSet<Integer> makeHashSet(int x){
-        TreeSet<Integer> set = new TreeSet();
-        for (int i = x - smoothing; i < x + smoothing; i++) set.add(new Integer(i));
+    private static TreeSet<Double> makeHashSet(double x){
+        TreeSet<Double> set = new TreeSet();
+        for (double i = x - smoothing; i < x + smoothing; i =+ 0.0001) set.add(new Double(i));
         return set;
     }
 
