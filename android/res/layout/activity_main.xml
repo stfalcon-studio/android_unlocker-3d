@@ -63,11 +63,31 @@
             android:layout_alignParentLeft="true"
             android:layout_alignParentRight="true"/>
 
+    <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text=""
+            android:id="@+id/textView6"
+            android:textColor="#f61651"
+            android:textSize="22sp"
+            android:gravity="center"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentRight="true"/>
+
     <Button
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="Start"
+            android:text="Record gesture"
             android:id="@+id/button"/>
+
+    <Button
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Compare gesture"
+            android:id="@+id/button2"/>
+
+
 
     <LinearLayout
             android:layout_width="fill_parent"

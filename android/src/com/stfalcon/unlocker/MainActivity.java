@@ -33,12 +33,15 @@ public class MainActivity extends Activity implements SensorEventListener {
     TextView outputY2;
     TextView outputZ2;
     LinearLayout layout;
-    Button button;
+    Button button, compar;
+    TextView proc;
+    GraphViewSeries pitchsaveDataSeries, rollsaveDataSeries;
     double startTime;
     boolean isSensorOn = false;
     ArrayList<double[]> accDataList = new ArrayList<double[]>();
     ArrayList<double[]> gyrDataList = new ArrayList<double[]>();
     ArrayList<double[]> filterDataList = new ArrayList<double[]>();
+    ArrayList<double[]> saveDataList = new ArrayList<double[]>();
 
     public static String arrayListToString(ArrayList<double[]> dataList) {
         String s = "";
@@ -58,10 +61,13 @@ public class MainActivity extends Activity implements SensorEventListener {
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         setContentView(R.layout.activity_main);
 
+        proc = (TextView) findViewById(R.id.textView6);
+
         button = (Button) findViewById(R.id.button);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                saveDataList = new ArrayList<double[]>();
                 startTime = System.currentTimeMillis();
                 accDataList.clear();
                 gyrDataList.clear();
@@ -69,6 +75,21 @@ public class MainActivity extends Activity implements SensorEventListener {
                 isSensorOn = true;
             }
         });
+
+        compar = (Button) findViewById(R.id.button2);
+        compar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                saveDataList.addAll(filterDataList);
+                startTime = System.currentTimeMillis();
+                accDataList.clear();
+                gyrDataList.clear();
+                filterDataList.clear();
+                isSensorOn = true;
+
+            }
+        });
+
         layout = (LinearLayout) findViewById(R.id.ll_graph);
         //just some textviews, for data output
         outputX = (TextView) findViewById(R.id.textView);
@@ -152,9 +173,22 @@ public class MainActivity extends Activity implements SensorEventListener {
             rollGraphViewData[i] = new GraphView.GraphViewData(i, filterDataList.get(i)[1]);
         }
 
+        GraphViewSeries pitchDataSeries = new GraphViewSeries("pitch", new GraphViewSeries.GraphViewSeriesStyle(Color.BLACK, 4), pitchGraphViewData);
+        GraphViewSeries rollDataSeries = new GraphViewSeries("roll", new GraphViewSeries.GraphViewSeriesStyle(Color.RED, 4), rollGraphViewData);
 
-        GraphViewSeries pitchDataSeries = new GraphViewSeries("pitch", new GraphViewSeries.GraphViewSeriesStyle(Color.BLACK, 3), pitchGraphViewData);
-        GraphViewSeries rollDataSeries = new GraphViewSeries("roll", new GraphViewSeries.GraphViewSeriesStyle(Color.RED, 3), rollGraphViewData);
+        if (saveDataList.size() > 0) {
+
+            GraphView.GraphViewData[] pitchGraphViewsaveData = new GraphView.GraphViewData[saveDataList.size()];
+            for (int i = 0; i < saveDataList.size(); i++) {
+                pitchGraphViewsaveData[i] = new GraphView.GraphViewData(i, saveDataList.get(i)[0]);
+            }
+            GraphView.GraphViewData[] rollGraphViewsaveData = new GraphView.GraphViewData[saveDataList.size()];
+            for (int i = 0; i < saveDataList.size(); i++) {
+                rollGraphViewsaveData[i] = new GraphView.GraphViewData(i, saveDataList.get(i)[1]);
+            }
+            pitchsaveDataSeries = new GraphViewSeries("pitch1", new GraphViewSeries.GraphViewSeriesStyle(Color.GREEN, 2), pitchGraphViewsaveData);
+            rollsaveDataSeries = new GraphViewSeries("roll1", new GraphViewSeries.GraphViewSeriesStyle(Color.GREEN, 2), rollGraphViewsaveData);
+        }
 
         GraphView graphView = new LineGraphView(
                 this // context
@@ -162,6 +196,22 @@ public class MainActivity extends Activity implements SensorEventListener {
         );
         graphView.addSeries(pitchDataSeries); // data
         graphView.addSeries(rollDataSeries); // data
+        if (saveDataList.size() > 0) {
+            graphView.addSeries(pitchsaveDataSeries);
+            graphView.addSeries(rollsaveDataSeries);
+            double[] x = new double[filterDataList.size()];
+            double[] x1 = new double[saveDataList.size()];
+            double[] mass;
+            for (int i = 0; i < filterDataList.size(); i++){
+                mass = filterDataList.get(i);
+                x[i] = mass[0];
+            }
+            for (int i = 0; i < saveDataList.size(); i++){
+                mass = saveDataList.get(i);
+                x1[i] = mass[0];
+            }
+            proc.setText(String.valueOf(Comparison.comparisonArray(x,x1)) + "%");
+        }
         layout.addView(graphView);
     }
 
