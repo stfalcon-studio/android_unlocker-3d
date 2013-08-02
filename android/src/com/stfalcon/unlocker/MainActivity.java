@@ -1,17 +1,14 @@
 package com.stfalcon.unlocker;
 
 import android.app.Activity;
-import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.os.Handler;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
@@ -53,6 +50,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     ArrayList<double[]> gyrDataList = new ArrayList<double[]>();
     ArrayList<double[]> filterDataList = new ArrayList<double[]>();
     ArrayList<double[]> saveDataList = new ArrayList<double[]>();
+    ComponentName compName;
     private TextView tv_time;
     private TextView tv_new_time;
     private Activity context;
@@ -75,42 +73,22 @@ public class MainActivity extends Activity implements SensorEventListener {
         context = this;
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         setContentView(R.layout.activity_main);
-        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
-        filter.addAction(Intent.ACTION_SCREEN_OFF);
-        BroadcastReceiver mReceiver = new LockReceiver();
-        registerReceiver(mReceiver, filter);
-        //startService(new Intent(this, LockService.class));
-
-        /*IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
-
-        filter.addAction(Intent.ACTION_SCREEN_OFF);
-        filter.addAction(Intent.ACTION_USER_PRESENT);
-
-
-        LockReceiver mReceiver = new LockReceiver();
-        registerReceiver(mReceiver, filter);*/
-
+        startService(new Intent(this, LockService.class));
         proc = (TextView) findViewById(R.id.textView6);
+        Window wind = getWindow();
+        wind.addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
+        wind.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
+        View main = getWindow().getDecorView().findViewById(android.R.id.content);
+        main.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+        this.getWindow().setType(WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG);
+        //wind.addFlags(WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
+
+
+        compName = new ComponentName(this, MyAdmin.class);
 
         button = (Button) findViewById(R.id.button);
 
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Handler handler = new Handler();
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        Window wind = getWindow();
-                        //wind.addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
-                        wind.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
-                        wind.addFlags(WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
-                        Log.v("LOGER", "LOCK");
-                    }
-                }, 5000);
-            }
-        });
-        /*button.setOnTouchListener(new View.OnTouchListener() {
+        button.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
@@ -131,7 +109,7 @@ public class MainActivity extends Activity implements SensorEventListener {
                 }
                 return false;
             }
-        });*/
+        });
         compar = (Button) findViewById(R.id.button2);
         compar.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -184,6 +162,11 @@ public class MainActivity extends Activity implements SensorEventListener {
 
         sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), sensorManager.SENSOR_DELAY_FASTEST);
         sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), sensorManager.SENSOR_DELAY_FASTEST);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
     }
 
     @Override
@@ -286,6 +269,10 @@ public class MainActivity extends Activity implements SensorEventListener {
             boolean unlock = pirsonKoef >= 0.4;
             proc.setText("Unlock: " + unlock + " " + "compare = " + new DecimalFormat("#.##").format(pirsonKoef));
             tv_new_time.setText("Time: " + new DecimalFormat("#.##").format((System.currentTimeMillis() - startTime) / 1000));
+            if (unlock) {
+                Window wind = getWindow();
+                finish();
+            }
         }
         layout.addView(graphView);
         if (!(saveDataList.size() > 0)) {

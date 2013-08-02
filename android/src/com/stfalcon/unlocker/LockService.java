@@ -33,9 +33,9 @@ public class LockService extends Service {
         try {
             boolean screenOff = intent.getBooleanExtra("screen_state", false);
             if (screenOff) {
-                Log.v("LOGER", "OFF SCREEN");
+
             } else {
-                Log.v("LOGER", "ON SCREEN");
+
             }
         } catch (Exception e) {
             Log.v("LOGER", "TROUBLE");
