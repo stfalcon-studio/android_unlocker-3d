@@ -1,12 +1,14 @@
 package com.stfalcon.unlocker;
 
 import android.app.Activity;
+import android.app.KeyguardManager;
 import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -39,10 +41,14 @@ public class MainActivity extends Activity implements SensorEventListener {
     GraphViewSeries pitchsaveDataSeries, rollsaveDataSeries;
     double startTime;
     boolean isSensorOn = false;
+    boolean isPressed = false;
     ArrayList<double[]> accDataList = new ArrayList<double[]>();
     ArrayList<double[]> gyrDataList = new ArrayList<double[]>();
     ArrayList<double[]> filterDataList = new ArrayList<double[]>();
     ArrayList<double[]> saveDataList = new ArrayList<double[]>();
+    private TextView tv_time;
+    private TextView tv_new_time;
+    private Activity context;
 
     public static String arrayListToString(ArrayList<double[]> dataList) {
         String s = "";
@@ -59,6 +65,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        context = this;
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         setContentView(R.layout.activity_main);
 
@@ -68,16 +75,58 @@ public class MainActivity extends Activity implements SensorEventListener {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                saveDataList.clear();
-                startTime = System.currentTimeMillis();
-                accDataList.clear();
-                gyrDataList.clear();
-                filterDataList.clear();
-                isSensorOn = true;
+                KeyguardManager mgr = (KeyguardManager) getSystemService(Activity.KEYGUARD_SERVICE);
+                KeyguardManager.KeyguardLock lock = mgr.newKeyguardLock(KEYGUARD_SERVICE);
+                lock.reenableKeyguard();
+            }
+        });
+        /*button.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    if (!isPressed) {
+                        saveDataList.clear();
+                        startTime = System.currentTimeMillis();
+                        accDataList.clear();
+                        gyrDataList.clear();
+                        filterDataList.clear();
+                        isSensorOn = true;
+                        isPressed = true;
+                    }
+                }
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                    isSensorOn = false;
+                    isPressed = false;
+                    onFinishSensorListen();
+                }
+                return false;
+            }
+        });*/
+        compar = (Button) findViewById(R.id.button2);
+        compar.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    if (!isPressed) {
+                        startTime = System.currentTimeMillis();
+                        accDataList.clear();
+                        gyrDataList.clear();
+                        filterDataList.clear();
+                        isSensorOn = true;
+                        isPressed = true;
+                    }
+                }
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                    isSensorOn = false;
+                    isPressed = false;
+                    onFinishSensorListen();
+                }
+                return false;
             }
         });
 
-        compar = (Button) findViewById(R.id.button2);
+
+        /*compar = (Button) findViewById(R.id.button2);
         compar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -87,7 +136,7 @@ public class MainActivity extends Activity implements SensorEventListener {
                 filterDataList.clear();
                 isSensorOn = true;
             }
-        });
+        });*/
 
         layout = (LinearLayout) findViewById(R.id.ll_graph);
         //just some textviews, for data output
@@ -99,12 +148,14 @@ public class MainActivity extends Activity implements SensorEventListener {
         outputY2 = (TextView) findViewById(R.id.textView4);
         outputZ2 = (TextView) findViewById(R.id.textView5);
 
-
+        tv_time = (TextView) findViewById(R.id.tv_time);
+        tv_new_time = (TextView) findViewById(R.id.tv_new_time);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+
         sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), sensorManager.SENSOR_DELAY_FASTEST);
         sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), sensorManager.SENSOR_DELAY_FASTEST);
     }
@@ -134,10 +185,6 @@ public class MainActivity extends Activity implements SensorEventListener {
                         double[] gyrData = {event.values[0], event.values[1], event.values[2]};
                         gyrDataList.add(gyrData);
                         break;
-                }
-                if ((System.currentTimeMillis() - startTime) > 1000) {
-                    isSensorOn = false;
-                    onFinishSensorListen();
                 }
             }
         }
@@ -210,12 +257,14 @@ public class MainActivity extends Activity implements SensorEventListener {
                 x1[i] = mass[0];
             }
             double pirsonKoef = Comparison.pirsonCompare(x, x1);
-            boolean unlock = pirsonKoef > 0.6;
+            boolean unlock = pirsonKoef >= 0.4;
             proc.setText("Unlock: " + unlock + " " + "compare = " + new DecimalFormat("#.##").format(pirsonKoef));
+            tv_new_time.setText("Time: " + new DecimalFormat("#.##").format((System.currentTimeMillis() - startTime) / 1000));
         }
         layout.addView(graphView);
         if (!(saveDataList.size() > 0)) {
             saveDataList.addAll(filterDataList);
+            tv_time.setText("Time: " + new DecimalFormat("#.##").format((System.currentTimeMillis() - startTime) / 1000));
         }
     }
 

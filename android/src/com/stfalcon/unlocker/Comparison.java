@@ -35,7 +35,11 @@ public class Comparison {
         if (x.length > y.length) {
             len = y.length;
         } else {
+            if (((y.length * 0.8) > x.length)) {
+                return -1;
+            }
             len = x.length;
+
         }
         double xs = 0;
         for (int i = 0; i < len; i++) {
