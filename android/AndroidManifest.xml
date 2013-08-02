@@ -24,14 +24,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <receiver android:name=".Widget" android:label="WatchWidget">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                    android:name="android.appwidget.provider"
-                    android:resource="@xml/watch_widget_provider" />
-        </receiver>
     </application>
 	<uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
