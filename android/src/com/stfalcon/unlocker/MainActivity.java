@@ -3,6 +3,7 @@ package com.stfalcon.unlocker;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -23,10 +24,13 @@ import com.jjoe64.graphview.LineGraphView;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 
 public class MainActivity extends Activity implements SensorEventListener {
 
+    public static String MY_PREF = "mupref";
     private static double GYROSCOPE_SENSITIVITY = 65.536;
     private static double ACCELEROMETER_SENSITIVITY = 8192.0;
     private static double dt = 0.01;
@@ -51,6 +55,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     ArrayList<double[]> filterDataList = new ArrayList<double[]>();
     ArrayList<double[]> saveDataList = new ArrayList<double[]>();
     ComponentName compName;
+    SharedPreferences sPref;
     private TextView tv_time;
     private TextView tv_new_time;
     private Activity context;
@@ -70,8 +75,13 @@ public class MainActivity extends Activity implements SensorEventListener {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         context = this;
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+
+        sPref = getSharedPreferences(MY_PREF, MODE_PRIVATE);
+
+
         setContentView(R.layout.activity_main);
         startService(new Intent(this, LockService.class));
         proc = (TextView) findViewById(R.id.textView6);
@@ -277,6 +287,18 @@ public class MainActivity extends Activity implements SensorEventListener {
         layout.addView(graphView);
         if (!(saveDataList.size() > 0)) {
             saveDataList.addAll(filterDataList);
+            Set<String> pitch = new HashSet<String>(saveDataList.size());
+            for (int i = 0; i < saveDataList.size(); i++) {
+                String s = String.valueOf(saveDataList.get(i)[0]);
+                pitch.add(s);
+            }
+            sPref.edit().putStringSet("pitch", pitch);
+            Set<String> roll = new HashSet<String>(saveDataList.size());
+            for (int i = 0; i < saveDataList.size(); i++) {
+                String s = String.valueOf(saveDataList.get(i)[1]);
+                roll.add(s);
+            }
+            sPref.edit().putStringSet("roll", roll);
             tv_time.setText("Time: " + new DecimalFormat("#.##").format((System.currentTimeMillis() - startTime) / 1000));
         }
     }
