@@ -1,31 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.stfalcon.unlocker"
-    android:versionCode="1"
-    android:versionName="0.1.0" >
+          package="com.stfalcon.unlocker"
+          android:versionCode="1"
+          android:versionName="0.1.0">
 
     <uses-sdk
         android:minSdkVersion="14"
         android:targetSdkVersion="18" />
 
     <application
-        android:debuggable="true"
-        android:allowBackup="true"
-        android:icon="@drawable/ic_launcher"
-        android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+            android:debuggable="true"
+            android:allowBackup="true"
+            android:icon="@drawable/ic_launcher"
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme">
         <activity
-            android:name="com.stfalcon.unlocker.MainActivity"
-            android:screenOrientation="portrait"
-            android:label="@string/app_name" >
-            <intent-filter>        
-                <action android:name="android.intent.action.MAIN" />
+                android:name="com.stfalcon.unlocker.MainActivity"
+                android:screenOrientation="portrait"
+                android:process=":unlock"
+                android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+                android:excludeFromRecents="true"
+                android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
 
-                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <receiver
+                android:name=".LockReceiver"
+                android:process=":unlock"
+                android:enabled="true">
+            <intent-filter>
+                <action android:name="android.intent.action.ACTION_SCREEN_ON"></action>
+                <action android:name="android.intent.action.ACTION_SCREEN_OFF"></action>
+
+            </intent-filter>
+        </receiver>
+
+        <service
+                android:name=".LockService"
+                android:enabled="true">
+        </service>
+
     </application>
-	<uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
-	
+
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
 </manifest>
