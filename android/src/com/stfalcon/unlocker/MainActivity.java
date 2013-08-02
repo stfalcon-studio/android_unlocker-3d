@@ -1,15 +1,21 @@
 package com.stfalcon.unlocker;
 
 import android.app.Activity;
-import android.app.KeyguardManager;
+import android.content.BroadcastReceiver;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -20,6 +26,7 @@ import com.jjoe64.graphview.LineGraphView;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+
 
 public class MainActivity extends Activity implements SensorEventListener {
 
@@ -68,16 +75,39 @@ public class MainActivity extends Activity implements SensorEventListener {
         context = this;
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         setContentView(R.layout.activity_main);
+        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
+        filter.addAction(Intent.ACTION_SCREEN_OFF);
+        BroadcastReceiver mReceiver = new LockReceiver();
+        registerReceiver(mReceiver, filter);
+        //startService(new Intent(this, LockService.class));
+
+        /*IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
+
+        filter.addAction(Intent.ACTION_SCREEN_OFF);
+        filter.addAction(Intent.ACTION_USER_PRESENT);
+
+
+        LockReceiver mReceiver = new LockReceiver();
+        registerReceiver(mReceiver, filter);*/
 
         proc = (TextView) findViewById(R.id.textView6);
 
         button = (Button) findViewById(R.id.button);
+
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                KeyguardManager mgr = (KeyguardManager) getSystemService(Activity.KEYGUARD_SERVICE);
-                KeyguardManager.KeyguardLock lock = mgr.newKeyguardLock(KEYGUARD_SERVICE);
-                lock.reenableKeyguard();
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        Window wind = getWindow();
+                        //wind.addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
+                        wind.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
+                        wind.addFlags(WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
+                        Log.v("LOGER", "LOCK");
+                    }
+                }, 5000);
             }
         });
         /*button.setOnTouchListener(new View.OnTouchListener() {
@@ -126,17 +156,13 @@ public class MainActivity extends Activity implements SensorEventListener {
         });
 
 
-        /*compar = (Button) findViewById(R.id.button2);
+        compar = (Button) findViewById(R.id.button2);
         compar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startTime = System.currentTimeMillis();
-                accDataList.clear();
-                gyrDataList.clear();
-                filterDataList.clear();
-                isSensorOn = true;
+
             }
-        });*/
+        });
 
         layout = (LinearLayout) findViewById(R.id.ll_graph);
         //just some textviews, for data output
