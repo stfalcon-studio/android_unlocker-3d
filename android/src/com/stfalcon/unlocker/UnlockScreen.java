@@ -16,6 +16,6 @@ public class UnlockScreen extends Activity {
 
         Button unlock = (Button)findViewById(R.id.button_unlock);
 
-        
+
     }
 }
