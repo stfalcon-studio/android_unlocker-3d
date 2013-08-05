@@ -10,6 +10,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
@@ -24,16 +25,11 @@ import com.jjoe64.graphview.LineGraphView;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
 
 
 public class MainActivity extends Activity implements SensorEventListener {
 
     public static String MY_PREF = "mupref";
-    private static double GYROSCOPE_SENSITIVITY = 65.536;
-    private static double ACCELEROMETER_SENSITIVITY = 8192.0;
-    private static double dt = 0.01;
     SensorManager sensorManager = null;
     //for accelerometer values
     TextView outputX;
@@ -53,9 +49,8 @@ public class MainActivity extends Activity implements SensorEventListener {
     ArrayList<double[]> accDataList = new ArrayList<double[]>();
     ArrayList<double[]> gyrDataList = new ArrayList<double[]>();
     ArrayList<double[]> filterDataList = new ArrayList<double[]>();
-    ArrayList<double[]> saveDataList = new ArrayList<double[]>();
+    //ArrayList<double[]> saveDataList = new ArrayList<double[]>();
     ComponentName compName;
-    SharedPreferences sPref;
     private TextView tv_time;
     private TextView tv_new_time;
     private Activity context;
@@ -79,7 +74,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         context = this;
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
-        sPref = getSharedPreferences(MY_PREF, MODE_PRIVATE);
+        UnlockApp.sPref = getSharedPreferences(MY_PREF, MODE_PRIVATE);
 
 
         setContentView(R.layout.activity_main);
@@ -103,7 +98,9 @@ public class MainActivity extends Activity implements SensorEventListener {
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
                     if (!isPressed) {
-                        saveDataList.clear();
+                        SharedPreferences.Editor editor = UnlockApp.sPref.edit();
+                        editor.putBoolean("isSave", false);
+                        editor.commit();
                         startTime = System.currentTimeMillis();
                         accDataList.clear();
                         gyrDataList.clear();
@@ -222,7 +219,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         if (accDataList.size() > gyrDataList.size()) len = gyrDataList.size();
         else len = accDataList.size();
         for (int i = 0; i < len; i++) {
-            filterDataList.add(complementaryFilter(accDataList.get(i), gyrDataList.get(i)));
+            filterDataList.add(UnlockApp.complementaryFilter(accDataList.get(i), gyrDataList.get(i)));
         }
       /*  Log.v("SENSOR", "---FILTER---");
         Log.v("SENSOR", "DATA LENGTH = " + filterDataList.size());
@@ -240,9 +237,10 @@ public class MainActivity extends Activity implements SensorEventListener {
 
         GraphViewSeries pitchDataSeries = new GraphViewSeries("pitch", new GraphViewSeries.GraphViewSeriesStyle(Color.BLACK, 4), pitchGraphViewData);
         GraphViewSeries rollDataSeries = new GraphViewSeries("roll", new GraphViewSeries.GraphViewSeriesStyle(Color.RED, 4), rollGraphViewData);
-
-        if (saveDataList.size() > 0) {
-
+        boolean isSave = UnlockApp.sPref.getBoolean("isSave", false);
+        Log.v("LOGER", "SAVE  " + isSave);
+        if (isSave) {
+            ArrayList<double[]> saveDataList = UnlockApp.loadArrayList();
             GraphView.GraphViewData[] pitchGraphViewsaveData = new GraphView.GraphViewData[saveDataList.size()];
             for (int i = 0; i < saveDataList.size(); i++) {
                 pitchGraphViewsaveData[i] = new GraphView.GraphViewData(i, saveDataList.get(i)[0]);
@@ -261,7 +259,8 @@ public class MainActivity extends Activity implements SensorEventListener {
         );
         graphView.addSeries(pitchDataSeries); // data
         graphView.addSeries(rollDataSeries); // data
-        if (saveDataList.size() > 0) {
+        if (isSave) {
+            ArrayList<double[]> saveDataList = UnlockApp.loadArrayList();
             graphView.addSeries(pitchsaveDataSeries);
             graphView.addSeries(rollsaveDataSeries);
             double[] x = new double[filterDataList.size()];
@@ -285,20 +284,8 @@ public class MainActivity extends Activity implements SensorEventListener {
             }
         }
         layout.addView(graphView);
-        if (!(saveDataList.size() > 0)) {
-            saveDataList.addAll(filterDataList);
-            Set<String> pitch = new HashSet<String>(saveDataList.size());
-            for (int i = 0; i < saveDataList.size(); i++) {
-                String s = String.valueOf(saveDataList.get(i)[0]);
-                pitch.add(s);
-            }
-            sPref.edit().putStringSet("pitch", pitch);
-            Set<String> roll = new HashSet<String>(saveDataList.size());
-            for (int i = 0; i < saveDataList.size(); i++) {
-                String s = String.valueOf(saveDataList.get(i)[1]);
-                roll.add(s);
-            }
-            sPref.edit().putStringSet("roll", roll);
+        if (!isSave) {
+            UnlockApp.saveArrayList(filterDataList);
             tv_time.setText("Time: " + new DecimalFormat("#.##").format((System.currentTimeMillis() - startTime) / 1000));
         }
     }
@@ -308,31 +295,6 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     }
 
-    double[] complementaryFilter(double accData[], double gyrData[]) {
-        double pitchAcc, rollAcc;
-        double pitch = 0;
-        double roll = 0;
-        double[] result = new double[2];
 
-        // Integrate the gyroscope data -> int(angularSpeed) = angle
-        pitch += ((float) gyrData[0] / GYROSCOPE_SENSITIVITY) * dt; // Angle around the X-axis
-        roll -= ((float) gyrData[1] / GYROSCOPE_SENSITIVITY) * dt;    // Angle around the Y-axis
-
-        // Compensate for drift with accelerometer data if !bullshit
-        // Sensitivity = -2 to 2 G at 16Bit -> 2G = 32768 && 0.5G = 8192
-        double forceMagnitudeApprox = Math.abs(accData[0]) + Math.abs(accData[1]) + Math.abs(accData[2]);
-        if (forceMagnitudeApprox > 8192 && forceMagnitudeApprox < 32768) {
-            // Turning around the X axis results in a vector on the Y-axis
-            pitchAcc = Math.atan2((float) accData[1], (float) accData[2]) * 180 / Math.PI;
-            pitch = pitch * 0.98 + pitchAcc * 0.02;
-
-            // Turning around the Y axis results in a vector on the X-axis
-            rollAcc = Math.atan2((float) accData[0], (float) accData[2]) * 180 / Math.PI;
-            roll = roll * 0.98 + rollAcc * 0.02;
-        }
-        result[0] = pitch;
-        result[1] = roll;
-        return result;
-    }
 }
 

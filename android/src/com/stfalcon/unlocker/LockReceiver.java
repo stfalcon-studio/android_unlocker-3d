@@ -14,7 +14,7 @@ public class LockReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
             //screenOff = true;
-            Intent intent1 = new Intent(context, MainActivity.class);
+            Intent intent1 = new Intent(context, UnlockScreen.class);
             intent1.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(intent1);
         } else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
