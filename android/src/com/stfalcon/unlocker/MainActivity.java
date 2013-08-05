@@ -10,7 +10,6 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
@@ -98,9 +97,6 @@ public class MainActivity extends Activity implements SensorEventListener {
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
                     if (!isPressed) {
-                        SharedPreferences.Editor editor = UnlockApp.sPref.edit();
-                        editor.putBoolean("isSave", false);
-                        editor.commit();
                         startTime = System.currentTimeMillis();
                         accDataList.clear();
                         gyrDataList.clear();
@@ -112,6 +108,9 @@ public class MainActivity extends Activity implements SensorEventListener {
                 if (event.getAction() == MotionEvent.ACTION_UP) {
                     isSensorOn = false;
                     isPressed = false;
+                    SharedPreferences.Editor editor = UnlockApp.sPref.edit();
+                    editor.putBoolean("isSave", false);
+                    editor.commit();
                     onFinishSensorListen();
                 }
                 return false;
@@ -185,22 +184,26 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     public void onSensorChanged(SensorEvent event) {
         synchronized (this) {
-            if (isSensorOn) {
-                switch (event.sensor.getType()) {
-                    case Sensor.TYPE_ACCELEROMETER:
-                        outputX.setText("x:" + Float.toString(event.values[0]));
-                        outputY.setText("y:" + Float.toString(event.values[1]));
-                        outputZ.setText("z:" + Float.toString(event.values[2]));
-                        double[] accData = {event.values[0], event.values[1], event.values[2]};
-                        accDataList.add(accData);
-                        break;
-                    case Sensor.TYPE_GYROSCOPE:
-                        outputX2.setText("x:" + Float.toString(event.values[0]));
-                        outputY2.setText("y:" + Float.toString(event.values[1]));
-                        outputZ2.setText("z:" + Float.toString(event.values[2]));
-                        double[] gyrData = {event.values[0], event.values[1], event.values[2]};
-                        gyrDataList.add(gyrData);
-                        break;
+            {
+                if (isSensorOn) {
+                    switch (event.sensor.getType()) {
+                        case Sensor.TYPE_ACCELEROMETER:
+                            outputX.setText("x:" + Float.toString(event.values[0]));
+                            outputY.setText("y:" + Float.toString(event.values[1]));
+                            outputZ.setText("z:" + Float.toString(event.values[2]));
+                            double[] accData = {event.values[0], event.values[1], event.values[2]};
+                            accDataList.add(accData);
+                            break;
+                        case Sensor.TYPE_GYROSCOPE:
+                            outputX2.setText("x:" + Float.toString(event.values[0]));
+                            outputY2.setText("y:" + Float.toString(event.values[1]));
+                            outputZ2.setText("z:" + Float.toString(event.values[2]));
+                            double[] gyrData = {event.values[0], event.values[1], event.values[2]};
+                            double mGyr = event.values[0] + event.values[1] + event.values[2];
+                            outputZ2.setText("Gyr:" + Double.toString(mGyr));
+                            gyrDataList.add(gyrData);
+                            break;
+                    }
                 }
             }
         }
@@ -238,7 +241,6 @@ public class MainActivity extends Activity implements SensorEventListener {
         GraphViewSeries pitchDataSeries = new GraphViewSeries("pitch", new GraphViewSeries.GraphViewSeriesStyle(Color.BLACK, 4), pitchGraphViewData);
         GraphViewSeries rollDataSeries = new GraphViewSeries("roll", new GraphViewSeries.GraphViewSeriesStyle(Color.RED, 4), rollGraphViewData);
         boolean isSave = UnlockApp.sPref.getBoolean("isSave", false);
-        Log.v("LOGER", "SAVE  " + isSave);
         if (isSave) {
             ArrayList<double[]> saveDataList = UnlockApp.loadArrayList();
             GraphView.GraphViewData[] pitchGraphViewsaveData = new GraphView.GraphViewData[saveDataList.size()];
@@ -265,6 +267,8 @@ public class MainActivity extends Activity implements SensorEventListener {
             graphView.addSeries(rollsaveDataSeries);
             double[] x = new double[filterDataList.size()];
             double[] x1 = new double[saveDataList.size()];
+            double[] y = new double[filterDataList.size()];
+            double[] y1 = new double[saveDataList.size()];
             double[] mass;
             for (int i = 0; i < filterDataList.size(); i++) {
                 mass = filterDataList.get(i);
@@ -274,14 +278,21 @@ public class MainActivity extends Activity implements SensorEventListener {
                 mass = saveDataList.get(i);
                 x1[i] = mass[0];
             }
-            double pirsonKoef = Comparison.pirsonCompare(x, x1);
-            boolean unlock = pirsonKoef >= 0.4;
-            proc.setText("Unlock: " + unlock + " " + "compare = " + new DecimalFormat("#.##").format(pirsonKoef));
-            tv_new_time.setText("Time: " + new DecimalFormat("#.##").format((System.currentTimeMillis() - startTime) / 1000));
-            if (unlock) {
-                Window wind = getWindow();
-                finish();
+            double xPirsonKoef = Comparison.pirsonCompare(x, x1);
+            for (int i = 0; i < filterDataList.size(); i++) {
+                mass = filterDataList.get(i);
+                y[i] = mass[1];
             }
+            for (int i = 0; i < saveDataList.size(); i++) {
+                mass = saveDataList.get(i);
+                y1[i] = mass[1];
+            }
+            double yPirsonKoef = Comparison.pirsonCompare(y, y1);
+            boolean unlock = xPirsonKoef + yPirsonKoef >= 0.8;
+            proc.setText("Unlock: " + unlock + " " + "compare Pitch = " +
+                    new DecimalFormat("#.##").format(xPirsonKoef) + " " +
+                    "Roll = " + new DecimalFormat("#.##").format(yPirsonKoef));
+            tv_new_time.setText("Time: " + new DecimalFormat("#.##").format((System.currentTimeMillis() - startTime) / 1000));
         }
         layout.addView(graphView);
         if (!isSave) {

@@ -9,7 +9,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.view.MotionEvent;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -55,14 +55,14 @@ public class UnlockScreen extends Activity implements SensorEventListener {
         wind.addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
         wind.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
         View main = getWindow().getDecorView().findViewById(android.R.id.content);
-        main.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+        //main.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
         this.getWindow().setType(WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG);
 
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
         Button unlock = (Button) findViewById(R.id.button_unlock);
         unlock.requestFocus();
-        unlock.setOnTouchListener(new View.OnTouchListener() {
+        /*unlock.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
@@ -82,6 +82,12 @@ public class UnlockScreen extends Activity implements SensorEventListener {
                 }
                 return false;
             }
+        });*/
+        unlock.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onFinishSensorListen();
+            }
         });
 
         layout = (LinearLayout) findViewById(R.id.ll_graph);
@@ -96,6 +102,12 @@ public class UnlockScreen extends Activity implements SensorEventListener {
         super.onResume();
         sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), sensorManager.SENSOR_DELAY_FASTEST);
         sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), sensorManager.SENSOR_DELAY_FASTEST);
+        startTime = System.currentTimeMillis();
+        accDataList.clear();
+        gyrDataList.clear();
+        filterDataList.clear();
+        isSensorOn = true;
+        isPressed = true;
     }
 
     @Override
@@ -108,6 +120,27 @@ public class UnlockScreen extends Activity implements SensorEventListener {
     @Override
     public void onSensorChanged(SensorEvent event) {
         synchronized (this) {
+            switch (event.sensor.getType()) {
+                case Sensor.TYPE_GYROSCOPE:
+                    double mGyr = event.values[0] + event.values[1] + event.values[2];
+                    boolean isMove = mGyr > 0.4 || mGyr < -0.4;
+                    if (isMove && !isSensorOn) {
+                        startTime = System.currentTimeMillis();
+                        accDataList.clear();
+                        gyrDataList.clear();
+                        filterDataList.clear();
+                        isSensorOn = true;
+                        isPressed = true;
+                        Log.v("LOGER", "Move");
+                    }
+                    boolean isStop = mGyr < 0.001 && mGyr > -0.001;
+                    if (isStop && isSensorOn) {
+                        isSensorOn = false;
+                        Log.v("LOGER", "STOP");
+                        onFinishSensorListen();
+                    }
+                    break;
+            }
             if (isSensorOn) {
                 switch (event.sensor.getType()) {
                     case Sensor.TYPE_ACCELEROMETER:
@@ -148,7 +181,7 @@ public class UnlockScreen extends Activity implements SensorEventListener {
         }
 
         GraphViewSeries pitchDataSeries = new GraphViewSeries("pitch", new GraphViewSeries.GraphViewSeriesStyle(Color.GREEN, 4), pitchGraphViewData);
-        GraphViewSeries rollDataSeries = new GraphViewSeries("roll", new GraphViewSeries.GraphViewSeriesStyle(Color.RED, 4), rollGraphViewData);
+        GraphViewSeries rollDataSeries = new GraphViewSeries("roll", new GraphViewSeries.GraphViewSeriesStyle(Color.BLUE, 4), rollGraphViewData);
 
         ArrayList<double[]> saveDataList = UnlockApp.loadArrayList();
         GraphView.GraphViewData[] pitchGraphViewsaveData = new GraphView.GraphViewData[saveDataList.size()];
@@ -172,8 +205,11 @@ public class UnlockScreen extends Activity implements SensorEventListener {
 
         graphView.addSeries(pitchsaveDataSeries);
         //graphView.addSeries(rollsaveDataSeries);
+
         double[] x = new double[filterDataList.size()];
         double[] x1 = new double[saveDataList.size()];
+        double[] y = new double[filterDataList.size()];
+        double[] y1 = new double[saveDataList.size()];
         double[] mass;
         for (int i = 0; i < filterDataList.size(); i++) {
             mass = filterDataList.get(i);
@@ -183,12 +219,19 @@ public class UnlockScreen extends Activity implements SensorEventListener {
             mass = saveDataList.get(i);
             x1[i] = mass[0];
         }
-        double pirsonKoef = Comparison.pirsonCompare(x, x1);
-        boolean unlock = pirsonKoef >= 0.4;
-        tv_compare.setText("Unlock: " + unlock + " " + "compare = " + new DecimalFormat("#.##").format(pirsonKoef));
-        //tv_new_time.setText("Time: " + new DecimalFormat("#.##").format((System.currentTimeMillis() - startTime) / 1000));
+        double xPirsonKoef = Comparison.pirsonCompare(x, x1);
+        for (int i = 0; i < filterDataList.size(); i++) {
+            mass = filterDataList.get(i);
+            y[i] = mass[1];
+        }
+        for (int i = 0; i < saveDataList.size(); i++) {
+            mass = saveDataList.get(i);
+            y1[i] = mass[1];
+        }
+        double yPirsonKoef = Comparison.pirsonCompare(y, y1);
+        boolean unlock = xPirsonKoef + yPirsonKoef >= 0.8;
+        tv_compare.setText("Unlock: " + unlock + " " + "compare = " + new DecimalFormat("#.##").format((xPirsonKoef + yPirsonKoef)));
         if (unlock) {
-            Window wind = getWindow();
             finish();
         }
         layout.addView(graphView);
