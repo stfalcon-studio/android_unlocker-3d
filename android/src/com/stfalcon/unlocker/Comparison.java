@@ -1,6 +1,8 @@
 package com.stfalcon.unlocker;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by user on 7/31/13.
@@ -32,16 +34,51 @@ public class Comparison {
         }
     }
 
+    public static List<double[]> prepareArrays(double[] arrayX, double[] arrayY) {
+        try {
+            double offset = 0.00006;
+            int len = 0;
+            if (arrayX.length > arrayY.length) {
+                len = arrayY.length;
+            } else {
+                len = arrayX.length;
+            }
+            int i;
+            for (i = 0; i < len; i++) {
+                if ((arrayX[i] < offset && arrayX[i] > (-offset)) && (arrayY[i] < offset && arrayY[i] > (-offset))) {
+                } else {
+                    break;
+                }
+            }
+            double[] pArrayX = Arrays.copyOfRange(arrayX, i, arrayX.length);
+            double[] pArrayY = Arrays.copyOfRange(arrayY, i, arrayY.length);
+            for (i = len - 1; i >= 0; i--) {
+                if ((arrayX[i] < offset && arrayX[i] > (-offset)) && (arrayY[i] < offset && arrayY[i] > (-offset))) {
+                } else {
+                    break;
+                }
+            }
+            pArrayX = Arrays.copyOfRange(pArrayX, 0, i);
+            pArrayY = Arrays.copyOfRange(pArrayY, 0, i);
+            ArrayList<double[]> doubles = new ArrayList<double[]>();
+            doubles.add(pArrayX);
+            doubles.add(pArrayY);
+            return doubles;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public static double pirsonCompare(double[] x, double[] y) {
         int len = 0;
         if (x.length > y.length) {
             len = y.length;
         } else {
             if (((y.length * 0.6) > x.length)) {
-                //return -1;
+                return -1;
             }
             len = x.length;
-
         }
         double xs = 0;
         for (int i = 0; i < len; i++) {
@@ -73,5 +110,6 @@ public class Comparison {
         double rxy = dxy / (mqx * mqy);
         return rxy;
     }
+
 
 }

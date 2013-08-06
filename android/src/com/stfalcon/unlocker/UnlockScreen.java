@@ -21,8 +21,8 @@ import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.GraphViewSeries;
 import com.jjoe64.graphview.LineGraphView;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by user on 8/2/13.
@@ -39,18 +39,17 @@ public class UnlockScreen extends Activity implements SensorEventListener {
     LinearLayout layout;
     private SensorManager sensorManager;
     private TextView tv_compare;
+    private Button btn_move;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_unlock);
-
+        UnlockApp.keyguardLock.reenableKeyguard();
         boolean isSave = UnlockApp.sPref.getBoolean("isSave", false);
         if (!isSave) {
             finish();
         }
-
-        UnlockApp.keyguardLock.reenableKeyguard();
         startService(new Intent(this, LockService.class));
         Window wind = getWindow();
         wind.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
@@ -59,15 +58,7 @@ public class UnlockScreen extends Activity implements SensorEventListener {
         this.getWindow().setType(WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG);
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
-        Button unlock = (Button) findViewById(R.id.button_unlock);
-        unlock.requestFocus();
-        unlock.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onFinishSensorListen();
-            }
-        });
-
+        btn_move = (Button) findViewById(R.id.btn_move);
         layout = (LinearLayout) findViewById(R.id.ll_graph);
         tv_compare = (TextView) findViewById(R.id.tv_compare);
 
@@ -78,8 +69,8 @@ public class UnlockScreen extends Activity implements SensorEventListener {
     @Override
     protected void onResume() {
         super.onResume();
-        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), sensorManager.SENSOR_DELAY_FASTEST);
-        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), sensorManager.SENSOR_DELAY_FASTEST);
+        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_FASTEST);
+        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_FASTEST);
         startTime = System.currentTimeMillis();
         accDataList.clear();
         gyrDataList.clear();
@@ -109,11 +100,13 @@ public class UnlockScreen extends Activity implements SensorEventListener {
                         filterDataList.clear();
                         isSensorOn = true;
                         isPressed = true;
-                        Log.v("LOGER", "Move");
+                        btn_move.setBackgroundColor(getResources().getColor(android.R.color.holo_green_dark));
+                        Log.v("LOGER", "MOVE");
                     }
                     boolean isStop = mGyr < 0.001 && mGyr > -0.001;
                     if (isStop && isSensorOn) {
                         isSensorOn = false;
+                        btn_move.setBackgroundColor(getResources().getColor(android.R.color.holo_red_dark));
                         Log.v("LOGER", "STOP");
                         onFinishSensorListen();
                     }
@@ -148,7 +141,6 @@ public class UnlockScreen extends Activity implements SensorEventListener {
             filterDataList.add(UnlockApp.complementaryFilter(accDataList.get(i), gyrDataList.get(i)));
         }
 
-
         GraphView.GraphViewData[] pitchGraphViewData = new GraphView.GraphViewData[filterDataList.size()];
         for (int i = 0; i < filterDataList.size(); i++) {
             pitchGraphViewData[i] = new GraphView.GraphViewData(i, filterDataList.get(i)[0]);
@@ -171,13 +163,13 @@ public class UnlockScreen extends Activity implements SensorEventListener {
         for (int i = 0; i < roll.length; i++) {
             rollGraphViewsaveData[i] = new GraphView.GraphViewData(i, roll[i]);
         }
-        pitchsaveDataSeries = new GraphViewSeries("pitch1", new GraphViewSeries.GraphViewSeriesStyle(Color.RED, 2), pitchGraphViewsaveData);
-        rollsaveDataSeries = new GraphViewSeries("roll1", new GraphViewSeries.GraphViewSeriesStyle(Color.YELLOW, 2), rollGraphViewsaveData);
+        pitchsaveDataSeries = new GraphViewSeries("save pitch", new GraphViewSeries.GraphViewSeriesStyle(Color.RED, 2), pitchGraphViewsaveData);
+        rollsaveDataSeries = new GraphViewSeries("save roll", new GraphViewSeries.GraphViewSeriesStyle(Color.YELLOW, 2), rollGraphViewsaveData);
 
 
         GraphView graphView = new LineGraphView(
                 this // context
-                , "GraphViewDemo" // heading
+                , "SAVED GESTURE" // heading
         );
         graphView.addSeries(pitchDataSeries); // data
         graphView.addSeries(rollDataSeries); // data
@@ -185,28 +177,47 @@ public class UnlockScreen extends Activity implements SensorEventListener {
         graphView.addSeries(pitchsaveDataSeries);
         graphView.addSeries(rollsaveDataSeries);
 
-        double[] x = new double[filterDataList.size()];
-        double[] x1 = pitch.clone();
-        double[] y = new double[filterDataList.size()];
-        double[] y1 = roll.clone();
+        double[] new_pitch = new double[filterDataList.size()];
+        double[] save_pitch = pitch.clone();
+        double[] new_roll = new double[filterDataList.size()];
+        double[] save_roll = roll.clone();
         for (int i = 0; i < filterDataList.size(); i++) {
-            x[i] = filterDataList.get(i)[0];
+            new_pitch[i] = filterDataList.get(i)[0];
         }
         for (int i = 0; i < filterDataList.size(); i++) {
-            y[i] = filterDataList.get(i)[1];
+            new_roll[i] = filterDataList.get(i)[1];
         }
+        List<double[]> pList = Comparison.prepareArrays(new_pitch, new_roll);
 
-        double xPirsonKoef = Comparison.pirsonCompare(x, x1);
-        double yPirsonKoef = Comparison.pirsonCompare(y, y1);
+        if (pList == null) {
+            showSaveGraph();
+            return;
+        }
+        double xPirsonKoef = Comparison.pirsonCompare(new_pitch, save_pitch);
+        double yPirsonKoef = Comparison.pirsonCompare(new_roll, save_roll);
         Log.v("LOGER", "XXX" + xPirsonKoef);
         Log.v("LOGER", "YYY" + yPirsonKoef);
-        boolean unlock = (xPirsonKoef + yPirsonKoef >= 0.6) && xPirsonKoef > 0.2 && yPirsonKoef > 0.2;
-        tv_compare.setText("Unlock: " + unlock + " " + "compare = " + new DecimalFormat("#.##").format((xPirsonKoef + yPirsonKoef)));
+        boolean unlock = (xPirsonKoef + yPirsonKoef >= UnlockApp.OFFSET_KOEF)
+                && xPirsonKoef > UnlockApp.OFFSET_KOEF_PITCH && yPirsonKoef > UnlockApp.OFFSET_KOEF_ROLL;
+
+        if (!unlock) {
+            boolean isConf = UnlockApp.sPref.getBoolean("isConfirm", false);
+            if (isConf) {
+                save_pitch = UnlockApp.loadConfArrays().get(0);
+                save_roll = UnlockApp.loadConfArrays().get(1);
+                xPirsonKoef = Comparison.pirsonCompare(new_pitch, save_pitch);
+                yPirsonKoef = Comparison.pirsonCompare(new_roll, save_roll);
+                Log.v("LOGER", "XXX1" + xPirsonKoef);
+                Log.v("LOGER", "YYY1" + yPirsonKoef);
+                unlock = (xPirsonKoef + yPirsonKoef >= UnlockApp.OFFSET_KOEF)
+                        && xPirsonKoef > UnlockApp.OFFSET_KOEF_PITCH && yPirsonKoef > UnlockApp.OFFSET_KOEF_ROLL;
+            }
+        }
+        int proc = (int) (((4d / 100d) * (xPirsonKoef + yPirsonKoef + (double) 2)) * 100);
+        tv_compare.setText("Unlock: " + unlock + " " + "compare = " + proc + "%");
         if (unlock) {
             UnlockApp.keyguardLock.disableKeyguard();
             finish();
-        } else {
-
         }
         layout.addView(graphView);
     }

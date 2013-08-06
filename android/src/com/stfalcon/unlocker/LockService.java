@@ -32,11 +32,6 @@ public class LockService extends Service {
     public void onStart(Intent intent, int startId) {
         try {
             boolean screenOff = intent.getBooleanExtra("screen_state", false);
-            if (screenOff) {
-
-            } else {
-
-            }
         } catch (Exception e) {
             Log.v("LOGER", "TROUBLE");
         }

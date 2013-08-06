@@ -15,9 +15,13 @@ public class UnlockApp extends Application {
     public static SharedPreferences sPref;
     public static String MY_PREF = "mupref";
     public static KeyguardManager.KeyguardLock keyguardLock;
+    public static double OFFSET_KOEF = 1.0;
+    public static double OFFSET_KOEF_PITCH = 0.6;
+    public static double OFFSET_KOEF_ROLL = 0.4;
     private static double GYROSCOPE_SENSITIVITY = 65.536;
+    //private static double GYROSCOPE_SENSITIVITY = 10;
     private static double ACCELEROMETER_SENSITIVITY = 8192.0;
-    private static double dt = 0.01;
+    private static double dt = 0.005;
     private KeyguardManager keyguardManager;
 
     public static void saveArrayList(ArrayList<double[]> arrayList) {
@@ -72,6 +76,32 @@ public class UnlockApp extends Application {
         editor.commit();
     }
 
+    public static void confArrays(double[] dpitch, double[] droll) {
+
+        SharedPreferences.Editor editor = sPref.edit();
+        String[] pitch = new String[dpitch.length];
+        for (int i = 0; i < dpitch.length; i++) {
+            String s = String.valueOf(dpitch[i]);
+            pitch[i] = s;
+        }
+        editor.putInt("conf_pitch_size", pitch.length);
+        for (int i = 0; i < pitch.length; i++) {
+            editor.putString("conf_pitch_" + i, pitch[i]);
+        }
+
+        String[] roll = new String[droll.length];
+        for (int i = 0; i < droll.length; i++) {
+            String s = String.valueOf(droll[i]);
+            roll[i] = s;
+        }
+        editor.putInt("conf_roll_size", roll.length);
+        for (int i = 0; i < roll.length; i++) {
+            editor.putString("conf_roll_" + i, roll[i]);
+        }
+        editor.putBoolean("isConfirm", true);
+        editor.commit();
+    }
+
     public static ArrayList<double[]> loadArrayList() {
         int pitchSize = sPref.getInt("pitch_size", 0);
         double[] pitch = new double[pitchSize];
@@ -103,6 +133,26 @@ public class UnlockApp extends Application {
         double[] roll = new double[rollSize];
         for (int i = 0; i < rollSize; i++) {
             roll[i] = Double.valueOf(sPref.getString("roll_" + i, "0"));
+        }
+
+        ArrayList<double[]> arrayList = new ArrayList<double[]>();
+        arrayList.add(pitch);
+        arrayList.add(roll);
+
+        return arrayList;
+    }
+
+    public static ArrayList<double[]> loadConfArrays() {
+        int pitchSize = sPref.getInt("conf_pitch_size", 0);
+        double[] pitch = new double[pitchSize];
+        for (int i = 0; i < pitchSize; i++) {
+            pitch[i] = Double.valueOf(sPref.getString("conf_pitch_" + i, "0"));
+        }
+
+        int rollSize = sPref.getInt("conf_roll_size", 0);
+        double[] roll = new double[rollSize];
+        for (int i = 0; i < rollSize; i++) {
+            roll[i] = Double.valueOf(sPref.getString("conf_roll_" + i, "0"));
         }
 
         ArrayList<double[]> arrayList = new ArrayList<double[]>();
