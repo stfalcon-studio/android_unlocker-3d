@@ -10,13 +10,13 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.GraphViewSeries;
@@ -28,7 +28,7 @@ import java.util.ArrayList;
 
 public class MainActivity extends Activity implements SensorEventListener {
 
-    public static String MY_PREF = "mupref";
+    public static String MY_PREF = "my_pref";
     SensorManager sensorManager = null;
     //for accelerometer values
     TextView outputX;
@@ -54,18 +54,6 @@ public class MainActivity extends Activity implements SensorEventListener {
     private TextView tv_new_time;
     private Activity context;
 
-    public static String arrayListToString(ArrayList<double[]> dataList) {
-        String s = "";
-        for (int i = 0; i < dataList.size(); i++) {
-            s += " [ ";
-            for (int j = 0; j < dataList.get(i).length; j++) {
-                s += " " + dataList.get(i)[j];
-            }
-            s += " ] " + "\n";
-        }
-        return s;
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -74,7 +62,6 @@ public class MainActivity extends Activity implements SensorEventListener {
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
         UnlockApp.sPref = getSharedPreferences(MY_PREF, MODE_PRIVATE);
-
 
         setContentView(R.layout.activity_main);
         startService(new Intent(this, LockService.class));
@@ -92,59 +79,47 @@ public class MainActivity extends Activity implements SensorEventListener {
 
         button = (Button) findViewById(R.id.button);
 
-        button.setOnTouchListener(new View.OnTouchListener() {
+        button.setOnClickListener(new View.OnClickListener() {
             @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                    if (!isPressed) {
-                        startTime = System.currentTimeMillis();
-                        accDataList.clear();
-                        gyrDataList.clear();
-                        filterDataList.clear();
-                        isSensorOn = true;
-                        isPressed = true;
-                    }
-                }
-                if (event.getAction() == MotionEvent.ACTION_UP) {
+            public void onClick(View v) {
+                if (!isSensorOn) {
+                    startTime = System.currentTimeMillis();
+                    accDataList.clear();
+                    gyrDataList.clear();
+                    filterDataList.clear();
+                    isSensorOn = true;
+                    isPressed = true;
+                    button.setText("STOP");
+                } else {
                     isSensorOn = false;
                     isPressed = false;
                     SharedPreferences.Editor editor = UnlockApp.sPref.edit();
                     editor.putBoolean("isSave", false);
                     editor.commit();
+                    button.setText("Record gesture");
                     onFinishSensorListen();
                 }
-                return false;
             }
         });
-        compar = (Button) findViewById(R.id.button2);
-        compar.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                    if (!isPressed) {
-                        startTime = System.currentTimeMillis();
-                        accDataList.clear();
-                        gyrDataList.clear();
-                        filterDataList.clear();
-                        isSensorOn = true;
-                        isPressed = true;
-                    }
-                }
-                if (event.getAction() == MotionEvent.ACTION_UP) {
-                    isSensorOn = false;
-                    isPressed = false;
-                    onFinishSensorListen();
-                }
-                return false;
-            }
-        });
-
 
         compar = (Button) findViewById(R.id.button2);
         compar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                if (!isSensorOn) {
+                    startTime = System.currentTimeMillis();
+                    accDataList.clear();
+                    gyrDataList.clear();
+                    filterDataList.clear();
+                    isSensorOn = true;
+                    isPressed = true;
+                    compar.setText("STOP");
+                } else {
+                    isSensorOn = false;
+                    isPressed = false;
+                    onFinishSensorListen();
+                    compar.setText("Compare gesture");
+                }
             }
         });
 
@@ -210,13 +185,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     }
 
     public void onFinishSensorListen() {
-        /*Log.v("SENSOR", "---SENSOR LISTEN FINISH---");
-        Log.v("SENSOR", "---ACCELEROMETER---");
-        Log.v("SENSOR", "DATA LENGTH = " + accDataList.size());
-        Log.v("SENSOR", "DATA = " + arrayListToString(accDataList));
-        Log.v("SENSOR", "---GYROSCOPE---");
-        Log.v("SENSOR", "DATA LENGTH = " + gyrDataList.size());
-        Log.v("SENSOR", "DATA = " + arrayListToString(gyrDataList));*/
+
         layout.removeAllViews();
         int len = 0;
         if (accDataList.size() > gyrDataList.size()) len = gyrDataList.size();
@@ -224,32 +193,45 @@ public class MainActivity extends Activity implements SensorEventListener {
         for (int i = 0; i < len; i++) {
             filterDataList.add(UnlockApp.complementaryFilter(accDataList.get(i), gyrDataList.get(i)));
         }
-      /*  Log.v("SENSOR", "---FILTER---");
-        Log.v("SENSOR", "DATA LENGTH = " + filterDataList.size());
-        Log.v("SENSOR", "DATA = " + arrayListToString(filterDataList));*/
 
-
-        GraphView.GraphViewData[] pitchGraphViewData = new GraphView.GraphViewData[filterDataList.size()];
+        double[] pArr = new double[filterDataList.size()];
         for (int i = 0; i < filterDataList.size(); i++) {
-            pitchGraphViewData[i] = new GraphView.GraphViewData(i, filterDataList.get(i)[0]);
+            pArr[i] = filterDataList.get(i)[0];
         }
-        GraphView.GraphViewData[] rollGraphViewData = new GraphView.GraphViewData[filterDataList.size()];
+        double[] rArr = new double[filterDataList.size()];
         for (int i = 0; i < filterDataList.size(); i++) {
-            rollGraphViewData[i] = new GraphView.GraphViewData(i, filterDataList.get(i)[1]);
+            rArr[i] = filterDataList.get(i)[1];
+        }
+
+        pArr = Comparison.prepareArray(pArr);
+        rArr = Comparison.prepareArray(rArr);
+        if (pArr == null || rArr == null) {
+            Toast.makeText(context, "Повторите еще раз...", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        GraphView.GraphViewData[] pitchGraphViewData = new GraphView.GraphViewData[pArr.length];
+        for (int i = 0; i < pArr.length; i++) {
+            pitchGraphViewData[i] = new GraphView.GraphViewData(i, pArr[i]);
+        }
+        GraphView.GraphViewData[] rollGraphViewData = new GraphView.GraphViewData[rArr.length];
+        for (int i = 0; i < rArr.length; i++) {
+            rollGraphViewData[i] = new GraphView.GraphViewData(i, rArr[i]);
         }
 
         GraphViewSeries pitchDataSeries = new GraphViewSeries("pitch", new GraphViewSeries.GraphViewSeriesStyle(Color.BLACK, 4), pitchGraphViewData);
         GraphViewSeries rollDataSeries = new GraphViewSeries("roll", new GraphViewSeries.GraphViewSeriesStyle(Color.RED, 4), rollGraphViewData);
+
         boolean isSave = UnlockApp.sPref.getBoolean("isSave", false);
         if (isSave) {
-            ArrayList<double[]> saveDataList = UnlockApp.loadArrayList();
-            GraphView.GraphViewData[] pitchGraphViewsaveData = new GraphView.GraphViewData[saveDataList.size()];
-            for (int i = 0; i < saveDataList.size(); i++) {
-                pitchGraphViewsaveData[i] = new GraphView.GraphViewData(i, saveDataList.get(i)[0]);
+            double savePitch[] = UnlockApp.loadArrays().get(0);
+            double saveRoll[] = UnlockApp.loadArrays().get(1);
+            GraphView.GraphViewData[] pitchGraphViewsaveData = new GraphView.GraphViewData[savePitch.length];
+            for (int i = 0; i < savePitch.length; i++) {
+                pitchGraphViewsaveData[i] = new GraphView.GraphViewData(i, savePitch[i]);
             }
-            GraphView.GraphViewData[] rollGraphViewsaveData = new GraphView.GraphViewData[saveDataList.size()];
-            for (int i = 0; i < saveDataList.size(); i++) {
-                rollGraphViewsaveData[i] = new GraphView.GraphViewData(i, saveDataList.get(i)[1]);
+            GraphView.GraphViewData[] rollGraphViewsaveData = new GraphView.GraphViewData[saveRoll.length];
+            for (int i = 0; i < saveRoll.length; i++) {
+                rollGraphViewsaveData[i] = new GraphView.GraphViewData(i, saveRoll[i]);
             }
             pitchsaveDataSeries = new GraphViewSeries("pitch1", new GraphViewSeries.GraphViewSeriesStyle(Color.GREEN, 2), pitchGraphViewsaveData);
             rollsaveDataSeries = new GraphViewSeries("roll1", new GraphViewSeries.GraphViewSeriesStyle(Color.YELLOW, 2), rollGraphViewsaveData);
@@ -262,33 +244,18 @@ public class MainActivity extends Activity implements SensorEventListener {
         graphView.addSeries(pitchDataSeries); // data
         graphView.addSeries(rollDataSeries); // data
         if (isSave) {
-            ArrayList<double[]> saveDataList = UnlockApp.loadArrayList();
+            double savePitch[] = UnlockApp.loadArrays().get(0);
+            double saveRoll[] = UnlockApp.loadArrays().get(1);
             graphView.addSeries(pitchsaveDataSeries);
             graphView.addSeries(rollsaveDataSeries);
-            double[] x = new double[filterDataList.size()];
-            double[] x1 = new double[saveDataList.size()];
-            double[] y = new double[filterDataList.size()];
-            double[] y1 = new double[saveDataList.size()];
-            double[] mass;
-            for (int i = 0; i < filterDataList.size(); i++) {
-                mass = filterDataList.get(i);
-                x[i] = mass[0];
-            }
-            for (int i = 0; i < saveDataList.size(); i++) {
-                mass = saveDataList.get(i);
-                x1[i] = mass[0];
-            }
+            double[] x = pArr;
+            double[] x1 = savePitch;
+            double[] y = rArr;
+            double[] y1 = saveRoll;
+
             double xPirsonKoef = Comparison.pirsonCompare(x, x1);
-            for (int i = 0; i < filterDataList.size(); i++) {
-                mass = filterDataList.get(i);
-                y[i] = mass[1];
-            }
-            for (int i = 0; i < saveDataList.size(); i++) {
-                mass = saveDataList.get(i);
-                y1[i] = mass[1];
-            }
             double yPirsonKoef = Comparison.pirsonCompare(y, y1);
-            boolean unlock = xPirsonKoef + yPirsonKoef >= 0.8;
+            boolean unlock = (xPirsonKoef + yPirsonKoef >= 0.6);// && xPirsonKoef > 0.2 && yPirsonKoef > 0.2;
             proc.setText("Unlock: " + unlock + " " + "compare Pitch = " +
                     new DecimalFormat("#.##").format(xPirsonKoef) + " " +
                     "Roll = " + new DecimalFormat("#.##").format(yPirsonKoef));
@@ -296,7 +263,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         }
         layout.addView(graphView);
         if (!isSave) {
-            UnlockApp.saveArrayList(filterDataList);
+            UnlockApp.saveArrays(pArr, rArr);
             tv_time.setText("Time: " + new DecimalFormat("#.##").format((System.currentTimeMillis() - startTime) / 1000));
         }
     }

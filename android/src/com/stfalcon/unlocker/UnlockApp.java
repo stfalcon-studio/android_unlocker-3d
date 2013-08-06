@@ -42,6 +42,32 @@ public class UnlockApp extends Application {
         editor.commit();
     }
 
+    public static void saveArrays(double[] dpitch, double[] droll) {
+
+        SharedPreferences.Editor editor = sPref.edit();
+        String[] pitch = new String[dpitch.length];
+        for (int i = 0; i < dpitch.length; i++) {
+            String s = String.valueOf(dpitch[i]);
+            pitch[i] = s;
+        }
+        editor.putInt("pitch_size", pitch.length);
+        for (int i = 0; i < pitch.length; i++) {
+            editor.putString("pitch_" + i, pitch[i]);
+        }
+
+        String[] roll = new String[droll.length];
+        for (int i = 0; i < droll.length; i++) {
+            String s = String.valueOf(droll[i]);
+            roll[i] = s;
+        }
+        editor.putInt("roll_size", roll.length);
+        for (int i = 0; i < roll.length; i++) {
+            editor.putString("roll_" + i, roll[i]);
+        }
+        editor.putBoolean("isSave", true);
+        editor.commit();
+    }
+
     public static ArrayList<double[]> loadArrayList() {
         int pitchSize = sPref.getInt("pitch_size", 0);
         double[] pitch = new double[pitchSize];
@@ -59,6 +85,26 @@ public class UnlockApp extends Application {
         for (int i = 0; i < rollSize; i++) {
             arrayList.add(new double[]{pitch[i], roll[i]});
         }
+        return arrayList;
+    }
+
+    public static ArrayList<double[]> loadArrays() {
+        int pitchSize = sPref.getInt("pitch_size", 0);
+        double[] pitch = new double[pitchSize];
+        for (int i = 0; i < pitchSize; i++) {
+            pitch[i] = Double.valueOf(sPref.getString("pitch_" + i, "0"));
+        }
+
+        int rollSize = sPref.getInt("roll_size", 0);
+        double[] roll = new double[rollSize];
+        for (int i = 0; i < rollSize; i++) {
+            roll[i] = Double.valueOf(sPref.getString("roll_" + i, "0"));
+        }
+
+        ArrayList<double[]> arrayList = new ArrayList<double[]>();
+        arrayList.add(pitch);
+        arrayList.add(roll);
+
         return arrayList;
     }
 
@@ -87,6 +133,18 @@ public class UnlockApp extends Application {
         result[0] = pitch;
         result[1] = roll;
         return result;
+    }
+
+    public static String arrayListToString(ArrayList<double[]> dataList) {
+        String s = "";
+        for (int i = 0; i < dataList.size(); i++) {
+            s += " [ ";
+            for (int j = 0; j < dataList.get(i).length; j++) {
+                s += " " + dataList.get(i)[j];
+            }
+            s += " ] " + "\n";
+        }
+        return s;
     }
 
     @Override
