@@ -115,11 +115,11 @@ public class UnlockScreen extends Activity implements SensorEventListener {
             if (isSensorOn) {
                 switch (event.sensor.getType()) {
                     case Sensor.TYPE_ACCELEROMETER:
-                        double[] accData = {event.values[0], event.values[1], event.values[2]};
+                        double[] accData = Comparison.lowFilter(event.values[0], event.values[1], event.values[2]);
                         accDataList.add(accData);
                         break;
                     case Sensor.TYPE_GYROSCOPE:
-                        double[] gyrData = {event.values[0], event.values[1], event.values[2]};
+                        double[] gyrData = Comparison.lowFilter(event.values[0], event.values[1], event.values[2]);
                         gyrDataList.add(gyrData);
                         break;
                 }
@@ -213,7 +213,7 @@ public class UnlockScreen extends Activity implements SensorEventListener {
                         && xPirsonKoef > UnlockApp.OFFSET_KOEF_PITCH && yPirsonKoef > UnlockApp.OFFSET_KOEF_ROLL;
             }
         }
-        int proc = (int) (((4d / 100d) * (xPirsonKoef + yPirsonKoef + (double) 2)) * 100);
+        int proc = (int) (((4d/100d) * (xPirsonKoef + yPirsonKoef + (double) 2)) * 100);
         tv_compare.setText("Unlock: " + unlock + " " + "compare = " + proc + "%");
         if (unlock) {
             UnlockApp.keyguardLock.disableKeyguard();

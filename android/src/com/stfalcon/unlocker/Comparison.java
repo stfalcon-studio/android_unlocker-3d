@@ -8,6 +8,7 @@ import java.util.List;
  * Created by user on 7/31/13.
  */
 public class Comparison {
+    static double kFilteringFactor = 0.2;
 
     public static double[] prepareArray(double[] array) {
         try {
@@ -32,6 +33,23 @@ public class Comparison {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public static double[] lowFilter(double x, double y, double z) {
+        double[] acceleration = new double[3];
+        acceleration[0] = x * kFilteringFactor + acceleration[0] * (1.0 - kFilteringFactor);
+        x = x - acceleration[0];
+        acceleration[0] = x;
+
+        acceleration[1] = y * kFilteringFactor + acceleration[1] * (1.0 - kFilteringFactor);
+        y = y - acceleration[1];
+        acceleration[1] = y;
+
+        acceleration[2] = z * kFilteringFactor + acceleration[2] * (1.0 - kFilteringFactor);
+        z = z - acceleration[2];
+        acceleration[2] = z;
+
+        return acceleration;
     }
 
     public static List<double[]> prepareArrays(double[] arrayX, double[] arrayY) {

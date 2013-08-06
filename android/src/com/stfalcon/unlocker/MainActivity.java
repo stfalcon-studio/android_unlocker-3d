@@ -162,15 +162,14 @@ public class MainActivity extends Activity implements SensorEventListener {
                             outputX.setText("x:" + Float.toString(event.values[0]));
                             outputY.setText("y:" + Float.toString(event.values[1]));
                             outputZ.setText("z:" + Float.toString(event.values[2]));
-                            double[] accData = {event.values[0], event.values[1], event.values[2]};
+                            double[] accData = Comparison.lowFilter(event.values[0], event.values[1], event.values[2]);
                             accDataList.add(accData);
                             break;
                         case Sensor.TYPE_GYROSCOPE:
                             outputX2.setText("x:" + Float.toString(event.values[0]));
                             outputY2.setText("y:" + Float.toString(event.values[1]));
                             outputZ2.setText("z:" + Float.toString(event.values[2]));
-                            double[] gyrData = {event.values[0], event.values[1], event.values[2]};
-                            double mGyr = event.values[0] + event.values[1] + event.values[2];
+                            double[] gyrData = Comparison.lowFilter(event.values[0], event.values[1], event.values[2]);
                             gyrDataList.add(gyrData);
                             break;
                     }
