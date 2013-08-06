@@ -1,6 +1,8 @@
 package com.stfalcon.unlocker;
 
 import android.app.Application;
+import android.app.KeyguardManager;
+import android.app.Service;
 import android.content.SharedPreferences;
 
 import java.util.ArrayList;
@@ -12,9 +14,11 @@ public class UnlockApp extends Application {
 
     public static SharedPreferences sPref;
     public static String MY_PREF = "mupref";
+    public static KeyguardManager.KeyguardLock keyguardLock;
     private static double GYROSCOPE_SENSITIVITY = 65.536;
     private static double ACCELEROMETER_SENSITIVITY = 8192.0;
     private static double dt = 0.01;
+    private KeyguardManager keyguardManager;
 
     public static void saveArrayList(ArrayList<double[]> arrayList) {
 
@@ -151,6 +155,8 @@ public class UnlockApp extends Application {
     public void onCreate() {
         super.onCreate();
         sPref = getSharedPreferences(MY_PREF, MODE_PRIVATE);
+        keyguardManager = (KeyguardManager) getSystemService(Service.KEYGUARD_SERVICE);
+        keyguardLock = keyguardManager.newKeyguardLock("Keyguard_Lock");
     }
 
 }
