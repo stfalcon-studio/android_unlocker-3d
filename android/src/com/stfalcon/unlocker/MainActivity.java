@@ -66,12 +66,12 @@ public class MainActivity extends Activity implements SensorEventListener {
         setContentView(R.layout.activity_main);
         startService(new Intent(this, LockService.class));
         proc = (TextView) findViewById(R.id.textView6);
-        Window wind = getWindow();
+       /* Window wind = getWindow();
         wind.addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
         wind.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
         View main = getWindow().getDecorView().findViewById(android.R.id.content);
         main.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-        this.getWindow().setType(WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG);
+        this.getWindow().setType(WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG);*/
         //wind.addFlags(WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
 
 

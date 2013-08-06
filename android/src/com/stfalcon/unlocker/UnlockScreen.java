@@ -50,14 +50,13 @@ public class UnlockScreen extends Activity implements SensorEventListener {
             finish();
         }
 
+        UnlockApp.keyguardLock.reenableKeyguard();
         startService(new Intent(this, LockService.class));
         Window wind = getWindow();
-        wind.addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
         wind.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
         View main = getWindow().getDecorView().findViewById(android.R.id.content);
-        //main.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+        main.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
         this.getWindow().setType(WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG);
-
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
         Button unlock = (Button) findViewById(R.id.button_unlock);
@@ -204,7 +203,10 @@ public class UnlockScreen extends Activity implements SensorEventListener {
         boolean unlock = (xPirsonKoef + yPirsonKoef >= 0.6) && xPirsonKoef > 0.2 && yPirsonKoef > 0.2;
         tv_compare.setText("Unlock: " + unlock + " " + "compare = " + new DecimalFormat("#.##").format((xPirsonKoef + yPirsonKoef)));
         if (unlock) {
+            UnlockApp.keyguardLock.disableKeyguard();
             finish();
+        } else {
+
         }
         layout.addView(graphView);
     }
