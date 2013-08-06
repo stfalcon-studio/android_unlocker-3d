@@ -1,33 +1,35 @@
 package com.stfalcon.unlocker;
 
-import android.util.Log;
+import java.util.Arrays;
 
 /**
  * Created by user on 7/31/13.
  */
 public class Comparison {
 
-    private static final double smoothing = 0.0500;
-    private static int procent = 0;
-
-    public static int comparisonArray(double[] a, double[] a1) {
-        /*double point = a[0];
-        double point1 = a1[0];
-        Log.i("Loger","point = " + point);*/
-        /*double dx = Math.abs(a[0] - a1[0]);
-
-        if (a[0] <= a1[0]) point = point + dx;
-        if (a[0] > a1[0]) point = point - dx;*/
-
-        //  if ((a1[0] > point - smoothing) && (a1[0] < point + smoothing)){
-        for (int i = 0; i < a1.length; i++) {
-                /*if (a[0] <= a1[0]) point = a[i] + dx;
-                if (a[0] > a1[0]) point = a[i] - dx;*/
-            if ((a1[i] > a[i] - smoothing) && (a1[i] < a[i] + smoothing)) procent++;
+    public static double[] prepareArray(double[] array) {
+        try {
+            double offset = 0.00009;
+            int i;
+            for (i = 0; i < array.length; i++) {
+                if (array[i] < offset && array[i] > (-offset)) {
+                } else {
+                    break;
+                }
+            }
+            double[] pArray = Arrays.copyOfRange(array, i, array.length);
+            for (i = pArray.length - 1; i >= 0; i--) {
+                if (pArray[i] < offset && pArray[i] > (-offset)) {
+                } else {
+                    break;
+                }
+            }
+            pArray = Arrays.copyOfRange(pArray, 0, i);
+            return pArray;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
-        Log.v("LOGER", "proc" + procent);
-        // }
-        return (procent / a1.length) * 100;
     }
 
     public static double pirsonCompare(double[] x, double[] y) {
@@ -35,8 +37,8 @@ public class Comparison {
         if (x.length > y.length) {
             len = y.length;
         } else {
-            if (((y.length * 0.8) > x.length)) {
-                return -1;
+            if (((y.length * 0.6) > x.length)) {
+                //return -1;
             }
             len = x.length;
 

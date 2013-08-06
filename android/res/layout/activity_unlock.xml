@@ -1,28 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
-                android:background="@android:color/black">
-
-
-    <DigitalClock
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/dcTime"
-            android:layout_gravity="center"
-            android:textSize="40dp"/>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
+              android:background="@android:color/black">
 
 
     <LinearLayout
-            android:layout_below="@+id/dcTime"
-            android:layout_width="fill_parent"
-            android:id="@+id/ll_graph_unlock"
+            android:layout_width="match_parent"
+            android:id="@+id/ll_graph"
             android:orientation="horizontal"
-            android:layout_height="wrap_content">
+            android:padding="5dp"
+            android:layout_height="300dp">
     </LinearLayout>
+
+    <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text=""
+            android:id="@+id/tv_compare"
+            android:textColor="#f61651"
+            android:textSize="22sp"
+            android:gravity="center"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentRight="true"/>
 
     <Button
             android:layout_width="200dp"
@@ -32,4 +36,4 @@
             android:layout_gravity="center"
             android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"/>
-</RelativeLayout>
+</LinearLayout>
