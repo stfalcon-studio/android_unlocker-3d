@@ -213,7 +213,7 @@ public class UnlockScreen extends Activity implements SensorEventListener {
                         && xPirsonKoef > UnlockApp.OFFSET_KOEF_PITCH && yPirsonKoef > UnlockApp.OFFSET_KOEF_ROLL;
             }
         }
-        int proc = (int) (((4d/100d) * (xPirsonKoef + yPirsonKoef + (double) 2)) * 100);
+        int proc = (int) (((xPirsonKoef + yPirsonKoef + (double) 2)) / 0.04d);
         tv_compare.setText("Unlock: " + unlock + " " + "compare = " + proc + "%");
         if (unlock) {
             UnlockApp.keyguardLock.disableKeyguard();

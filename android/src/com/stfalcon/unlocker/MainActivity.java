@@ -77,7 +77,7 @@ public class MainActivity extends Activity implements SensorEventListener {
                     isSensorOn = true;
                     isPressed = true;
                     button.setText("STOP");
-                } else {
+                } else if (!toConfirm) {
                     isSensorOn = false;
                     isPressed = false;
                     SharedPreferences.Editor editor = UnlockApp.sPref.edit();
@@ -102,12 +102,11 @@ public class MainActivity extends Activity implements SensorEventListener {
                     filterDataList.clear();
                     isSensorOn = true;
                     isPressed = true;
-
+                    toConfirm = true;
                     compar.setText("STOP");
-                } else {
+                } else if (toConfirm) {
                     isSensorOn = false;
                     isPressed = false;
-                    toConfirm = true;
                     onFinishSensorListen();
                     compar.setText("Compare gesture");
                 }
@@ -262,7 +261,6 @@ public class MainActivity extends Activity implements SensorEventListener {
             tv_new_time.setText("Time: " + new DecimalFormat("#.##").format((System.currentTimeMillis() - startTime) / 1000));
             if (toConfirm && unlock) {
                 UnlockApp.confArrays(pArr, rArr);
-                toConfirm = false;
             }
         }
         layout.addView(graphView);
@@ -270,6 +268,7 @@ public class MainActivity extends Activity implements SensorEventListener {
             UnlockApp.saveArrays(pArr, rArr);
             tv_time.setText("Time: " + new DecimalFormat("#.##").format((System.currentTimeMillis() - startTime) / 1000));
         }
+        toConfirm = false;
     }
 
     @Override
