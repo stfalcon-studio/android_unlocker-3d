@@ -1,11 +1,14 @@
 package com.stfalcon.unlocker;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by user on 7/31/13.
  */
 public class Comparison {
+    static double kFilteringFactor = 0.2;
 
     public static double[] prepareArray(double[] array) {
         try {
@@ -32,16 +35,68 @@ public class Comparison {
         }
     }
 
+    public static double[] lowFilter(double x, double y, double z) {
+        double[] acceleration = new double[3];
+        acceleration[0] = x * kFilteringFactor + acceleration[0] * (1.0 - kFilteringFactor);
+        x = x - acceleration[0];
+        acceleration[0] = x;
+
+        acceleration[1] = y * kFilteringFactor + acceleration[1] * (1.0 - kFilteringFactor);
+        y = y - acceleration[1];
+        acceleration[1] = y;
+
+        acceleration[2] = z * kFilteringFactor + acceleration[2] * (1.0 - kFilteringFactor);
+        z = z - acceleration[2];
+        acceleration[2] = z;
+
+        return acceleration;
+    }
+
+    public static List<double[]> prepareArrays(double[] arrayX, double[] arrayY) {
+        try {
+            double offset = 0.00006;
+            int len = 0;
+            if (arrayX.length > arrayY.length) {
+                len = arrayY.length;
+            } else {
+                len = arrayX.length;
+            }
+            int i;
+            for (i = 0; i < len; i++) {
+                if ((arrayX[i] < offset && arrayX[i] > (-offset)) && (arrayY[i] < offset && arrayY[i] > (-offset))) {
+                } else {
+                    break;
+                }
+            }
+            double[] pArrayX = Arrays.copyOfRange(arrayX, i, arrayX.length);
+            double[] pArrayY = Arrays.copyOfRange(arrayY, i, arrayY.length);
+            for (i = len - 1; i >= 0; i--) {
+                if ((arrayX[i] < offset && arrayX[i] > (-offset)) && (arrayY[i] < offset && arrayY[i] > (-offset))) {
+                } else {
+                    break;
+                }
+            }
+            pArrayX = Arrays.copyOfRange(pArrayX, 0, i);
+            pArrayY = Arrays.copyOfRange(pArrayY, 0, i);
+            ArrayList<double[]> doubles = new ArrayList<double[]>();
+            doubles.add(pArrayX);
+            doubles.add(pArrayY);
+            return doubles;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public static double pirsonCompare(double[] x, double[] y) {
         int len = 0;
         if (x.length > y.length) {
             len = y.length;
         } else {
             if (((y.length * 0.6) > x.length)) {
-                //return -1;
+                return -1;
             }
             len = x.length;
-
         }
         double xs = 0;
         for (int i = 0; i < len; i++) {
@@ -73,5 +128,6 @@ public class Comparison {
         double rxy = dxy / (mqx * mqy);
         return rxy;
     }
+
 
 }

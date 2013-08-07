@@ -1,7 +1,6 @@
 package com.stfalcon.unlocker;
 
 import android.app.Activity;
-import android.content.ComponentName;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -11,8 +10,6 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -24,6 +21,7 @@ import com.jjoe64.graphview.LineGraphView;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.List;
 
 
 public class MainActivity extends Activity implements SensorEventListener {
@@ -45,11 +43,10 @@ public class MainActivity extends Activity implements SensorEventListener {
     double startTime;
     boolean isSensorOn = false;
     boolean isPressed = false;
+    boolean toConfirm = false;
     ArrayList<double[]> accDataList = new ArrayList<double[]>();
     ArrayList<double[]> gyrDataList = new ArrayList<double[]>();
     ArrayList<double[]> filterDataList = new ArrayList<double[]>();
-    //ArrayList<double[]> saveDataList = new ArrayList<double[]>();
-    ComponentName compName;
     private TextView tv_time;
     private TextView tv_new_time;
     private Activity context;
@@ -66,16 +63,6 @@ public class MainActivity extends Activity implements SensorEventListener {
         setContentView(R.layout.activity_main);
         startService(new Intent(this, LockService.class));
         proc = (TextView) findViewById(R.id.textView6);
-       /* Window wind = getWindow();
-        wind.addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
-        wind.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
-        View main = getWindow().getDecorView().findViewById(android.R.id.content);
-        main.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-        this.getWindow().setType(WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG);*/
-        //wind.addFlags(WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
-
-
-        compName = new ComponentName(this, MyAdmin.class);
 
         button = (Button) findViewById(R.id.button);
 
@@ -90,7 +77,7 @@ public class MainActivity extends Activity implements SensorEventListener {
                     isSensorOn = true;
                     isPressed = true;
                     button.setText("STOP");
-                } else {
+                } else if (!toConfirm) {
                     isSensorOn = false;
                     isPressed = false;
                     SharedPreferences.Editor editor = UnlockApp.sPref.edit();
@@ -98,11 +85,13 @@ public class MainActivity extends Activity implements SensorEventListener {
                     editor.commit();
                     button.setText("Record gesture");
                     onFinishSensorListen();
+                    compar.setEnabled(true);
                 }
             }
         });
 
         compar = (Button) findViewById(R.id.button2);
+        compar.setEnabled(false);
         compar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -113,8 +102,9 @@ public class MainActivity extends Activity implements SensorEventListener {
                     filterDataList.clear();
                     isSensorOn = true;
                     isPressed = true;
+                    toConfirm = true;
                     compar.setText("STOP");
-                } else {
+                } else if (toConfirm) {
                     isSensorOn = false;
                     isPressed = false;
                     onFinishSensorListen();
@@ -135,6 +125,11 @@ public class MainActivity extends Activity implements SensorEventListener {
 
         tv_time = (TextView) findViewById(R.id.tv_time);
         tv_new_time = (TextView) findViewById(R.id.tv_new_time);
+
+        boolean isSave = UnlockApp.sPref.getBoolean("isSave", false);
+        if (isSave) {
+            showSaveGraph();
+        }
     }
 
     @Override
@@ -166,16 +161,14 @@ public class MainActivity extends Activity implements SensorEventListener {
                             outputX.setText("x:" + Float.toString(event.values[0]));
                             outputY.setText("y:" + Float.toString(event.values[1]));
                             outputZ.setText("z:" + Float.toString(event.values[2]));
-                            double[] accData = {event.values[0], event.values[1], event.values[2]};
+                            double[] accData = Comparison.lowFilter(event.values[0], event.values[1], event.values[2]);
                             accDataList.add(accData);
                             break;
                         case Sensor.TYPE_GYROSCOPE:
                             outputX2.setText("x:" + Float.toString(event.values[0]));
                             outputY2.setText("y:" + Float.toString(event.values[1]));
                             outputZ2.setText("z:" + Float.toString(event.values[2]));
-                            double[] gyrData = {event.values[0], event.values[1], event.values[2]};
-                            double mGyr = event.values[0] + event.values[1] + event.values[2];
-                            outputZ2.setText("Gyr:" + Double.toString(mGyr));
+                            double[] gyrData = Comparison.lowFilter(event.values[0], event.values[1], event.values[2]);
                             gyrDataList.add(gyrData);
                             break;
                     }
@@ -202,13 +195,13 @@ public class MainActivity extends Activity implements SensorEventListener {
         for (int i = 0; i < filterDataList.size(); i++) {
             rArr[i] = filterDataList.get(i)[1];
         }
-
-        pArr = Comparison.prepareArray(pArr);
-        rArr = Comparison.prepareArray(rArr);
-        if (pArr == null || rArr == null) {
-            Toast.makeText(context, "Повторите еще раз...", Toast.LENGTH_SHORT).show();
+        List<double[]> pList = Comparison.prepareArrays(pArr, rArr);
+        if (pList == null) {
+            Toast.makeText(context, getString(R.string.try_again), Toast.LENGTH_SHORT).show();
             return;
         }
+        pArr = pList.get(0);
+        rArr = pList.get(1);
         GraphView.GraphViewData[] pitchGraphViewData = new GraphView.GraphViewData[pArr.length];
         for (int i = 0; i < pArr.length; i++) {
             pitchGraphViewData[i] = new GraphView.GraphViewData(i, pArr[i]);
@@ -222,6 +215,8 @@ public class MainActivity extends Activity implements SensorEventListener {
         GraphViewSeries rollDataSeries = new GraphViewSeries("roll", new GraphViewSeries.GraphViewSeriesStyle(Color.RED, 4), rollGraphViewData);
 
         boolean isSave = UnlockApp.sPref.getBoolean("isSave", false);
+        boolean isConfirm = UnlockApp.sPref.getBoolean("isConfirm", false);
+
         if (isSave) {
             double savePitch[] = UnlockApp.loadArrays().get(0);
             double saveRoll[] = UnlockApp.loadArrays().get(1);
@@ -239,7 +234,7 @@ public class MainActivity extends Activity implements SensorEventListener {
 
         GraphView graphView = new LineGraphView(
                 this // context
-                , "GraphViewDemo" // heading
+                , "New Gesture" // heading
         );
         graphView.addSeries(pitchDataSeries); // data
         graphView.addSeries(rollDataSeries); // data
@@ -255,22 +250,52 @@ public class MainActivity extends Activity implements SensorEventListener {
 
             double xPirsonKoef = Comparison.pirsonCompare(x, x1);
             double yPirsonKoef = Comparison.pirsonCompare(y, y1);
-            boolean unlock = (xPirsonKoef + yPirsonKoef >= 0.6);// && xPirsonKoef > 0.2 && yPirsonKoef > 0.2;
+            boolean unlock = (xPirsonKoef + yPirsonKoef >= UnlockApp.OFFSET_KOEF)
+                    && xPirsonKoef > UnlockApp.OFFSET_KOEF_PITCH && yPirsonKoef > UnlockApp.OFFSET_KOEF_ROLL;
+            if (unlock) {
+
+            }
             proc.setText("Unlock: " + unlock + " " + "compare Pitch = " +
                     new DecimalFormat("#.##").format(xPirsonKoef) + " " +
                     "Roll = " + new DecimalFormat("#.##").format(yPirsonKoef));
             tv_new_time.setText("Time: " + new DecimalFormat("#.##").format((System.currentTimeMillis() - startTime) / 1000));
+            if (toConfirm && unlock) {
+                UnlockApp.confArrays(pArr, rArr);
+            }
         }
         layout.addView(graphView);
         if (!isSave) {
             UnlockApp.saveArrays(pArr, rArr);
             tv_time.setText("Time: " + new DecimalFormat("#.##").format((System.currentTimeMillis() - startTime) / 1000));
         }
+        toConfirm = false;
     }
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
+    }
+
+    private void showSaveGraph() {
+        double[] savePitch = UnlockApp.loadArrays().get(0);
+        double[] saveRoll = UnlockApp.loadArrays().get(1);
+        GraphView.GraphViewData[] pitchGraphViewsaveData = new GraphView.GraphViewData[savePitch.length];
+        for (int i = 0; i < savePitch.length; i++) {
+            pitchGraphViewsaveData[i] = new GraphView.GraphViewData(i, savePitch[i]);
+        }
+        GraphView.GraphViewData[] rollGraphViewsaveData = new GraphView.GraphViewData[saveRoll.length];
+        for (int i = 0; i < saveRoll.length; i++) {
+            rollGraphViewsaveData[i] = new GraphView.GraphViewData(i, saveRoll[i]);
+        }
+        pitchsaveDataSeries = new GraphViewSeries("pitch1", new GraphViewSeries.GraphViewSeriesStyle(Color.RED, 2), pitchGraphViewsaveData);
+        rollsaveDataSeries = new GraphViewSeries("roll1", new GraphViewSeries.GraphViewSeriesStyle(Color.YELLOW, 2), rollGraphViewsaveData);
+        GraphView graphView = new LineGraphView(
+                this // context
+                , "Saved gesture" // heading
+        );
+        graphView.addSeries(pitchsaveDataSeries);
+        graphView.addSeries(rollsaveDataSeries);
+        layout.addView(graphView);
     }
 
 
