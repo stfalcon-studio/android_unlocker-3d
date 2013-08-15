@@ -15,13 +15,14 @@ public class UnlockApp extends Application {
     public static SharedPreferences sPref;
     public static String MY_PREF = "mupref";
     public static KeyguardManager.KeyguardLock keyguardLock;
-    public static double OFFSET_KOEF = 1.0;
-    public static double OFFSET_KOEF_PITCH = 0.6;
-    public static double OFFSET_KOEF_ROLL = 0.4;
+    /*  public static double OFFSET_KOEF = 1.0;
+      public static double OFFSET_KOEF_PITCH = 0.6;
+      public static double OFFSET_KOEF_ROLL = 0.4;*/
     private static double GYROSCOPE_SENSITIVITY = 65.536;
     //private static double GYROSCOPE_SENSITIVITY = 10;
     private static double ACCELEROMETER_SENSITIVITY = 8192.0;
     private static double dt = 0.005;
+    private static UnlockApp self;
     private KeyguardManager keyguardManager;
 
     public static void saveArrayList(ArrayList<double[]> arrayList) {
@@ -201,12 +202,54 @@ public class UnlockApp extends Application {
         return s;
     }
 
+    public static UnlockApp getInstance() {
+        return self;
+    }
+
+    public FACTOR getFactors() {
+        int quality = sPref.getInt("quality", R.id.rb_hard);
+        switch (quality) {
+            case R.id.rb_low:
+                return new FACTOR(0.6, 0.5, 0.1);
+            case R.id.rb_medium:
+                return new FACTOR(0.8, 0.5, 0.3);
+            case R.id.rb_hard:
+                return new FACTOR(1.0, 0.6, 0.4);
+            default:
+                return new FACTOR(1.4, 0.8, 0.6);
+        }
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
         sPref = getSharedPreferences(MY_PREF, MODE_PRIVATE);
         keyguardManager = (KeyguardManager) getSystemService(Service.KEYGUARD_SERVICE);
         keyguardLock = keyguardManager.newKeyguardLock("Keyguard_Lock");
+        self = this;
     }
 
+    public class FACTOR {
+        double factor;
+        double pitch_factor;
+        double roll_factor;
+
+        public FACTOR(double factor, double pitch_factor, double roll_factor) {
+            this.factor = factor;
+            this.pitch_factor = pitch_factor;
+            this.roll_factor = roll_factor;
+        }
+
+        public double getFactor() {
+            return factor;
+        }
+
+        public double getPitchFactor() {
+            return pitch_factor;
+        }
+
+        public double getRollFactor() {
+            return roll_factor;
+        }
+    }
 }

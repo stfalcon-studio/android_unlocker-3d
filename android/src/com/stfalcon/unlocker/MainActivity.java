@@ -9,9 +9,11 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,6 +29,9 @@ import java.util.List;
 public class MainActivity extends Activity implements SensorEventListener {
 
     public static String MY_PREF = "my_pref";
+    public static int LOW_Q = R.id.rb_low;
+    public static int MEDIUM_Q = R.id.rb_medium;
+    public static int HARD_Q = R.id.rb_hard;
     SensorManager sensorManager = null;
     //for accelerometer values
     TextView outputX;
@@ -50,6 +55,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     private TextView tv_time;
     private TextView tv_new_time;
     private Activity context;
+    private RadioGroup rb_quality;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -130,6 +136,26 @@ public class MainActivity extends Activity implements SensorEventListener {
         if (isSave) {
             showSaveGraph();
         }
+        int quality = 0;
+        if (UnlockApp.sPref.contains("quality")) {
+            quality = (UnlockApp.sPref.getInt("quality", R.id.rb_hard));
+        } else {
+            quality = (UnlockApp.sPref.getInt("quality", R.id.rb_hard));
+            SharedPreferences.Editor editor = UnlockApp.sPref.edit();
+            editor.putInt("quality", R.id.rb_hard);
+            editor.commit();
+        }
+        Log.v("LOGER", "" + quality);
+        rb_quality = (RadioGroup) findViewById(R.id.rg_quality);
+        rb_quality.check(quality);
+        rb_quality.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                SharedPreferences.Editor editor = UnlockApp.sPref.edit();
+                editor.putInt("quality", checkedId);
+                editor.commit();
+            }
+        });
     }
 
     @Override
@@ -250,11 +276,10 @@ public class MainActivity extends Activity implements SensorEventListener {
 
             double xPirsonKoef = Comparison.pirsonCompare(x, x1);
             double yPirsonKoef = Comparison.pirsonCompare(y, y1);
-            boolean unlock = (xPirsonKoef + yPirsonKoef >= UnlockApp.OFFSET_KOEF)
-                    && xPirsonKoef > UnlockApp.OFFSET_KOEF_PITCH && yPirsonKoef > UnlockApp.OFFSET_KOEF_ROLL;
-            if (unlock) {
-
-            }
+            UnlockApp.FACTOR factor = UnlockApp.getInstance().getFactors();
+            boolean unlock = (xPirsonKoef + yPirsonKoef >= factor.getFactor())
+                    && ((xPirsonKoef > factor.getPitchFactor() && yPirsonKoef > factor.getRollFactor())
+                    || (yPirsonKoef > factor.getPitchFactor() && xPirsonKoef > factor.getRollFactor()));
             proc.setText("Unlock: " + unlock + " " + "compare Pitch = " +
                     new DecimalFormat("#.##").format(xPirsonKoef) + " " +
                     "Roll = " + new DecimalFormat("#.##").format(yPirsonKoef));

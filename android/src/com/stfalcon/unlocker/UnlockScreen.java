@@ -9,6 +9,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -40,11 +41,13 @@ public class UnlockScreen extends Activity implements SensorEventListener {
     private SensorManager sensorManager;
     private TextView tv_compare;
     private Button btn_move;
+    private SensorEventListener listener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_unlock);
+        listener = this;
         UnlockApp.keyguardLock.reenableKeyguard();
         boolean isSave = UnlockApp.sPref.getBoolean("isSave", false);
         if (!isSave) {
@@ -61,7 +64,6 @@ public class UnlockScreen extends Activity implements SensorEventListener {
         btn_move = (Button) findViewById(R.id.btn_move);
         layout = (LinearLayout) findViewById(R.id.ll_graph);
         tv_compare = (TextView) findViewById(R.id.tv_compare);
-
         showSaveGraph();
 
     }
@@ -69,14 +71,19 @@ public class UnlockScreen extends Activity implements SensorEventListener {
     @Override
     protected void onResume() {
         super.onResume();
-        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_FASTEST);
-        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_FASTEST);
-        startTime = System.currentTimeMillis();
-        accDataList.clear();
-        gyrDataList.clear();
-        filterDataList.clear();
-        isSensorOn = true;
-        isPressed = true;
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                sensorManager.registerListener(listener, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_FASTEST);
+                sensorManager.registerListener(listener, sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_FASTEST);
+                startTime = System.currentTimeMillis();
+                accDataList.clear();
+                gyrDataList.clear();
+                filterDataList.clear();
+                isSensorOn = true;
+                isPressed = true;
+            }
+        }, 1000);
     }
 
     @Override
@@ -197,8 +204,11 @@ public class UnlockScreen extends Activity implements SensorEventListener {
         double yPirsonKoef = Comparison.pirsonCompare(new_roll, save_roll);
         Log.v("LOGER", "XXX" + xPirsonKoef);
         Log.v("LOGER", "YYY" + yPirsonKoef);
-        boolean unlock = (xPirsonKoef + yPirsonKoef >= UnlockApp.OFFSET_KOEF)
-                && xPirsonKoef > UnlockApp.OFFSET_KOEF_PITCH && yPirsonKoef > UnlockApp.OFFSET_KOEF_ROLL;
+        UnlockApp.FACTOR factor = UnlockApp.getInstance().getFactors();
+        Log.v("LOGER", "FACTOR" + factor.getFactor());
+        boolean unlock = (xPirsonKoef + yPirsonKoef >= factor.getFactor())
+                && ((xPirsonKoef > factor.getPitchFactor() && yPirsonKoef > factor.getRollFactor())
+                || (yPirsonKoef > factor.getPitchFactor() && xPirsonKoef > factor.getRollFactor()));
 
         if (!unlock) {
             boolean isConf = UnlockApp.sPref.getBoolean("isConfirm", false);
@@ -209,8 +219,10 @@ public class UnlockScreen extends Activity implements SensorEventListener {
                 yPirsonKoef = Comparison.pirsonCompare(new_roll, save_roll);
                 Log.v("LOGER", "XXX1" + xPirsonKoef);
                 Log.v("LOGER", "YYY1" + yPirsonKoef);
-                unlock = (xPirsonKoef + yPirsonKoef >= UnlockApp.OFFSET_KOEF)
-                        && xPirsonKoef > UnlockApp.OFFSET_KOEF_PITCH && yPirsonKoef > UnlockApp.OFFSET_KOEF_ROLL;
+                factor = UnlockApp.getInstance().getFactors();
+                unlock = (xPirsonKoef + yPirsonKoef >= factor.getFactor())
+                        && ((xPirsonKoef > factor.getPitchFactor() && yPirsonKoef > factor.getRollFactor())
+                        || (yPirsonKoef > factor.getPitchFactor() && xPirsonKoef > factor.getRollFactor()));
             }
         }
         int proc = (int) (((xPirsonKoef + yPirsonKoef + (double) 2)) / 0.04d);
