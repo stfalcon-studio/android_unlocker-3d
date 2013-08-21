@@ -1,8 +1,10 @@
 package com.stfalcon.unlocker;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -12,8 +14,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.RadioGroup;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -53,6 +57,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     ArrayList<double[]> gyrDataList = new ArrayList<double[]>();
     ArrayList<double[]> filterDataList = new ArrayList<double[]>();
     private TextView tv_time;
+    private Switch on_off;
     private TextView tv_new_time;
     private Activity context;
     private RadioGroup rb_quality;
@@ -64,7 +69,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         context = this;
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
-        UnlockApp.sPref = getSharedPreferences(MY_PREF, MODE_PRIVATE);
+        UnlockApp.sPref = getSharedPreferences(MY_PREF, 0);
 
         setContentView(R.layout.activity_main);
         startService(new Intent(this, LockService.class));
@@ -95,6 +100,7 @@ public class MainActivity extends Activity implements SensorEventListener {
                 }
             }
         });
+
 
         compar = (Button) findViewById(R.id.button2);
         compar.setEnabled(false);
@@ -159,6 +165,23 @@ public class MainActivity extends Activity implements SensorEventListener {
     }
 
     @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        on_off = (Switch) findViewById(R.id.off_on);
+        on_off.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                UnlockApp.getInstance().saveActivState(isChecked);
+            }
+        });
+        if (UnlockApp.prefs.getString(UnlockApp.IS_ON, "false").equals("true")) {
+            on_off.performClick();
+            Log.i("Loger", "IS_ON = " + UnlockApp.prefs.getString(UnlockApp.IS_ON, "false"));
+        }
+
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
 
@@ -177,6 +200,8 @@ public class MainActivity extends Activity implements SensorEventListener {
         sensorManager.unregisterListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER));
         sensorManager.unregisterListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE));
     }
+
+
 
     public void onSensorChanged(SensorEvent event) {
         synchronized (this) {

@@ -3,8 +3,12 @@ package com.stfalcon.unlocker;
 import android.app.Application;
 import android.app.KeyguardManager;
 import android.app.Service;
+import android.content.Context;
 import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
+import android.util.Log;
 
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 
 /**
@@ -12,7 +16,9 @@ import java.util.ArrayList;
  */
 public class UnlockApp extends Application {
 
-    public static SharedPreferences sPref;
+    public static final String IS_ON = "ison";
+    public static SharedPreferences sPref, prefs;
+    public Context context;
     public static String MY_PREF = "mupref";
     public static KeyguardManager.KeyguardLock keyguardLock;
     /*  public static double OFFSET_KOEF = 1.0;
@@ -24,6 +30,24 @@ public class UnlockApp extends Application {
     private static double dt = 0.005;
     private static UnlockApp self;
     private KeyguardManager keyguardManager;
+
+    public void saveActivState(Boolean state) {
+
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString(IS_ON, String.valueOf(state));
+        editor.commit();
+        Log.i("Loger", "PrefUnlockON =" + String.valueOf(state));
+
+        String FILENAME = "active";
+        String string = String.valueOf(state);
+        try {
+            FileOutputStream fos = openFileOutput(FILENAME, Context.MODE_PRIVATE);
+            fos.write(string.getBytes());
+            fos.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     public static void saveArrayList(ArrayList<double[]> arrayList) {
 
@@ -206,6 +230,17 @@ public class UnlockApp extends Application {
         return self;
     }
 
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        context = this;
+        sPref = getSharedPreferences(MY_PREF, 0);
+        prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        keyguardManager = (KeyguardManager) getSystemService(Service.KEYGUARD_SERVICE);
+        keyguardLock = keyguardManager.newKeyguardLock("Keyguard_Lock");
+        self = this;
+    }
+
     public FACTOR getFactors() {
         int quality = sPref.getInt("quality", R.id.rb_hard);
         switch (quality) {
@@ -218,15 +253,6 @@ public class UnlockApp extends Application {
             default:
                 return new FACTOR(1.4, 0.8, 0.6);
         }
-    }
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        sPref = getSharedPreferences(MY_PREF, MODE_PRIVATE);
-        keyguardManager = (KeyguardManager) getSystemService(Service.KEYGUARD_SERVICE);
-        keyguardLock = keyguardManager.newKeyguardLock("Keyguard_Lock");
-        self = this;
     }
 
     public class FACTOR {

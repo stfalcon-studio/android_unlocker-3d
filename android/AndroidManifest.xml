@@ -38,18 +38,23 @@
         </activity>
 
         <receiver
-                android:name=".LockReceiver"
+                android:name="com.stfalcon.unlocker.LockReceiver"
                 android:process=":unlock"
-                android:enabled="true">
+                android:enabled="true"
+                android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
             <intent-filter>
                 <action android:name="android.intent.action.ACTION_SCREEN_ON"></action>
                 <action android:name="android.intent.action.ACTION_SCREEN_OFF"></action>
+                <action android:name="com.stfalcon.unlocker.ACTIVE"></action>
+
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <category android:name="android.intent.category.DEFAULT" />
 
             </intent-filter>
         </receiver>
 
         <service
-                android:name=".LockService"
+                android:name="com.stfalcon.unlocker.LockService"
                 android:enabled="true">
         </service>
 
@@ -60,4 +65,5 @@
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 </manifest>
