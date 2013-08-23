@@ -16,6 +16,7 @@ import java.util.ArrayList;
  */
 public class UnlockApp extends Application {
 
+    private static double a = 0.1;
     public static final String IS_ON = "ison";
     public static SharedPreferences sPref, prefs;
     public Context context;
@@ -188,6 +189,40 @@ public class UnlockApp extends Application {
     }
 
     public static double[] complementaryFilter(double accData[], double gyrData[]) {
+        double pitchAcc, rollAcc;
+        double pitch = 0;
+        double roll = 0;
+        double[] result = new double[2];
+
+        // Integrate the gyroscope data -> int(angularSpeed) = angle
+        pitch += ((float) gyrData[0] / GYROSCOPE_SENSITIVITY) * dt; // Angle around the X-axis
+        roll -= ((float) gyrData[1] / GYROSCOPE_SENSITIVITY) * dt;    // Angle around the Y-axis
+
+        // Compensate for drift with accelerometer data if !bullshit
+        // Sensitivity = -2 to 2 G at 16Bit -> 2G = 32768 && 0.5G = 8192
+        double forceMagnitudeApprox = Math.abs(accData[0]) + Math.abs(accData[1]) + Math.abs(accData[2]);
+        if (forceMagnitudeApprox > 8192 && forceMagnitudeApprox < 32768) {
+            // Turning around the X axis results in a vector on the Y-axis
+            pitchAcc = Math.atan2((float) accData[1], (float) accData[2]) * 180 / Math.PI;
+            pitch = pitch * 0.98 + pitchAcc * 0.02;
+
+            // Turning around the Y axis results in a vector on the X-axis
+            rollAcc = Math.atan2((float) accData[0], (float) accData[2]) * 180 / Math.PI;
+            roll = roll * 0.98 + rollAcc * 0.02;
+        }
+        result[0] = pitch;
+        result[1] = roll;
+        return result;
+    }
+
+    public static double lowPassFilterAcc(double acceleration) {
+        double filteredValues = 0;
+        filteredValues = acceleration * a + filteredValues * (1.0d - a);
+        return filteredValues;
+    }
+
+
+    public static double[] pinchFilter(double accData[], double gyrData[]) {
         double pitchAcc, rollAcc;
         double pitch = 0;
         double roll = 0;

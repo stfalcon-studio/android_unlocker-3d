@@ -1,10 +1,7 @@
 package com.stfalcon.unlocker;
 
 import android.app.Activity;
-import android.content.ComponentName;
-import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -30,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class MainActivity extends Activity implements SensorEventListener {
+public class MainActivity extends Activity implements SensorEventListener, View.OnClickListener {
 
     public static String MY_PREF = "my_pref";
     public static int LOW_Q = R.id.rb_low;
@@ -46,13 +43,16 @@ public class MainActivity extends Activity implements SensorEventListener {
     TextView outputY2;
     TextView outputZ2;
     LinearLayout layout;
-    Button button, compar;
+    public Button record, compar;
     TextView proc;
     GraphViewSeries pitchsaveDataSeries, rollsaveDataSeries;
+    GraphView graphView;
     double startTime;
     boolean isSensorOn = false;
     boolean isPressed = false;
     boolean toConfirm = false;
+    double[] temp = new double[3];
+    ArrayList<Double> masShow = new ArrayList<Double>();
     ArrayList<double[]> accDataList = new ArrayList<double[]>();
     ArrayList<double[]> gyrDataList = new ArrayList<double[]>();
     ArrayList<double[]> filterDataList = new ArrayList<double[]>();
@@ -61,83 +61,25 @@ public class MainActivity extends Activity implements SensorEventListener {
     private TextView tv_new_time;
     private Activity context;
     private RadioGroup rb_quality;
+    private int eventType = 333;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
+        initView();
         context = this;
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
+        record.setOnClickListener(this);
+        compar.setOnClickListener(this);
+        graphView = new LineGraphView(this, "Saved");
+        graphView.setScalable(true);
+        graphView.setManualYAxisBounds(1.0, -1.0);
         UnlockApp.sPref = getSharedPreferences(MY_PREF, 0);
 
-        setContentView(R.layout.activity_main);
-        startService(new Intent(this, LockService.class));
-        proc = (TextView) findViewById(R.id.textView6);
-
-        button = (Button) findViewById(R.id.button);
-
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!isSensorOn) {
-                    startTime = System.currentTimeMillis();
-                    accDataList.clear();
-                    gyrDataList.clear();
-                    filterDataList.clear();
-                    isSensorOn = true;
-                    isPressed = true;
-                    button.setText("STOP");
-                } else if (!toConfirm) {
-                    isSensorOn = false;
-                    isPressed = false;
-                    SharedPreferences.Editor editor = UnlockApp.sPref.edit();
-                    editor.putBoolean("isSave", false);
-                    editor.commit();
-                    button.setText("Record gesture");
-                    onFinishSensorListen();
-                    compar.setEnabled(true);
-                }
-            }
-        });
-
-
-        compar = (Button) findViewById(R.id.button2);
         compar.setEnabled(false);
-        compar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!isSensorOn) {
-                    startTime = System.currentTimeMillis();
-                    accDataList.clear();
-                    gyrDataList.clear();
-                    filterDataList.clear();
-                    isSensorOn = true;
-                    isPressed = true;
-                    toConfirm = true;
-                    compar.setText("STOP");
-                } else if (toConfirm) {
-                    isSensorOn = false;
-                    isPressed = false;
-                    onFinishSensorListen();
-                    compar.setText("Compare gesture");
-                }
-            }
-        });
-
-        layout = (LinearLayout) findViewById(R.id.ll_graph);
-        //just some textviews, for data output
-        outputX = (TextView) findViewById(R.id.textView);
-        outputY = (TextView) findViewById(R.id.textView1);
-        outputZ = (TextView) findViewById(R.id.textView2);
-
-        outputX2 = (TextView) findViewById(R.id.textView3);
-        outputY2 = (TextView) findViewById(R.id.textView4);
-        outputZ2 = (TextView) findViewById(R.id.textView5);
-
-        tv_time = (TextView) findViewById(R.id.tv_time);
-        tv_new_time = (TextView) findViewById(R.id.tv_new_time);
-
         boolean isSave = UnlockApp.sPref.getBoolean("isSave", false);
         if (isSave) {
             showSaveGraph();
@@ -162,6 +104,74 @@ public class MainActivity extends Activity implements SensorEventListener {
                 editor.commit();
             }
         });
+    }
+
+    public void initView() {
+        proc = (TextView) findViewById(R.id.textView6);
+        record = (Button) findViewById(R.id.record);
+        compar = (Button) findViewById(R.id.compare);
+        layout = (LinearLayout) findViewById(R.id.ll_graph);
+        outputX = (TextView) findViewById(R.id.textView);
+        outputY = (TextView) findViewById(R.id.textView1);
+        outputZ = (TextView) findViewById(R.id.textView2);
+        outputX2 = (TextView) findViewById(R.id.textView3);
+        outputY2 = (TextView) findViewById(R.id.textView4);
+        outputZ2 = (TextView) findViewById(R.id.textView5);
+        tv_time = (TextView) findViewById(R.id.tv_time);
+        tv_new_time = (TextView) findViewById(R.id.tv_new_time);
+        initMass();
+
+    }
+
+
+    public void initMass() {
+        for (int i = 0; i < 400; i++) {
+            masShow.add(0.0);
+        }
+    }
+
+
+    @Override
+    public void onClick(View v) {
+        //To change body of implemented methods use File | Settings | File Templates.
+        switch (v.getId()) {
+            case R.id.record:
+                if (!isSensorOn) {
+                    startTime = System.currentTimeMillis();
+                    accDataList.clear();
+                    gyrDataList.clear();
+                    filterDataList.clear();
+                    isSensorOn = true;
+                    isPressed = true;
+                    record.setText("STOP");
+                } else if (!toConfirm) {
+                    isSensorOn = false;
+                    isPressed = false;
+                    SharedPreferences.Editor editor = UnlockApp.sPref.edit();
+                    editor.putBoolean("isSave", false);
+                    editor.commit();
+                    record.setText("Record gesture");
+                    compar.setEnabled(true);
+                }
+                break;
+            case R.id.compare:
+                if (!isSensorOn) {
+                    startTime = System.currentTimeMillis();
+                    accDataList.clear();
+                    gyrDataList.clear();
+                    filterDataList.clear();
+                    isSensorOn = true;
+                    isPressed = true;
+                    toConfirm = true;
+                    compar.setText("STOP");
+                } else if (toConfirm) {
+                    isSensorOn = false;
+                    isPressed = false;
+                    compar.setText("Compare gesture");
+                }
+                break;
+
+        }
     }
 
     @Override
@@ -202,7 +212,6 @@ public class MainActivity extends Activity implements SensorEventListener {
     }
 
 
-
     public void onSensorChanged(SensorEvent event) {
         synchronized (this) {
             {
@@ -214,6 +223,7 @@ public class MainActivity extends Activity implements SensorEventListener {
                             outputZ.setText("z:" + Float.toString(event.values[2]));
                             double[] accData = Comparison.lowFilter(event.values[0], event.values[1], event.values[2]);
                             accDataList.add(accData);
+                           // getPoint(event.values[0], event.values[1], event.values[2],event.sensor.getType());
                             break;
                         case Sensor.TYPE_GYROSCOPE:
                             outputX2.setText("x:" + Float.toString(event.values[0]));
@@ -221,23 +231,63 @@ public class MainActivity extends Activity implements SensorEventListener {
                             outputZ2.setText("z:" + Float.toString(event.values[2]));
                             double[] gyrData = Comparison.lowFilter(event.values[0], event.values[1], event.values[2]);
                             gyrDataList.add(gyrData);
+                            getPoint(event.values[0], event.values[1], event.values[2],event.sensor.getType());
                             break;
                     }
+
                 }
+
             }
         }
     }
 
-    public void onFinishSensorListen() {
+    public void getPoint(Float x, Float y, Float z, int type) {
 
+
+            double acc = Math.sqrt(x * x + y * y + z * z);
+            double point = UnlockApp.lowPassFilterAcc(acc);
+            masShow.add(point);
+            if (masShow.size() > 400) {
+                masShow.remove(0);
+
+            }
+        showOnGraph();
+    }
+
+    private void showOnGraph() {
         layout.removeAllViews();
+        GraphView.GraphViewData[] accGraphViewsaveData = new GraphView.GraphViewData[masShow.size()];
+        for (int i = 0; i < masShow.size(); i++) {
+            accGraphViewsaveData[i] = new GraphView.GraphViewData(i, masShow.get(i));
+        }
+        GraphViewSeries accGraphViewSeries1 = new GraphViewSeries("acc", new GraphViewSeries.GraphViewSeriesStyle(Color.BLACK, 4), accGraphViewsaveData);
+        GraphViewSeries accGraphViewSeries = new GraphViewSeries("acc", new GraphViewSeries.GraphViewSeriesStyle(Color.GREEN, 2), accGraphViewsaveData);
+
+
+        //GraphView graphView = new LineGraphView(this, "Saved");
+        graphView.removeAllSeries();
+        graphView.addSeries(accGraphViewSeries1);
+        graphView.addSeries(accGraphViewSeries);
+        layout.addView(graphView);
+    }
+
+
+    public ArrayList<double[]> filterData() {
+        ArrayList<double[]> filterData = new ArrayList<double[]>();
         int len = 0;
         if (accDataList.size() > gyrDataList.size()) len = gyrDataList.size();
         else len = accDataList.size();
         for (int i = 0; i < len; i++) {
-            filterDataList.add(UnlockApp.complementaryFilter(accDataList.get(i), gyrDataList.get(i)));
+            filterData.add(UnlockApp.complementaryFilter(accDataList.get(i), gyrDataList.get(i)));
         }
+        return filterData;
+    }
 
+
+    public void showGrafics() {
+        //layout.removeAllViews();
+
+        filterDataList = filterData();
         double[] pArr = new double[filterDataList.size()];
         for (int i = 0; i < filterDataList.size(); i++) {
             pArr[i] = filterDataList.get(i)[0];
@@ -313,13 +363,14 @@ public class MainActivity extends Activity implements SensorEventListener {
                 UnlockApp.confArrays(pArr, rArr);
             }
         }
-        layout.addView(graphView);
+        //layout.addView(graphView);
         if (!isSave) {
             UnlockApp.saveArrays(pArr, rArr);
             tv_time.setText("Time: " + new DecimalFormat("#.##").format((System.currentTimeMillis() - startTime) / 1000));
         }
         toConfirm = false;
     }
+
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {

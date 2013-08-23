@@ -179,13 +179,13 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:text="Record gesture"
-            android:id="@+id/button"/>
+            android:id="@+id/record"/>
 
     <Button
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:text="Compare gesture"
-            android:id="@+id/button2"/>
+            android:id="@+id/compare"/>
 
 
     <LinearLayout
