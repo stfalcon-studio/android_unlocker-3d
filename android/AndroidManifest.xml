@@ -37,6 +37,7 @@
                 android:label="@string/app_name">
         </activity>
 
+
         <receiver
                 android:name="com.stfalcon.unlocker.LockReceiver"
                 android:process=":unlock"
@@ -47,7 +48,6 @@
                 <action android:name="android.intent.action.ACTION_SCREEN_ON"></action>
                 <action android:name="android.intent.action.ACTION_SCREEN_OFF"></action>
                 <action android:name="com.stfalcon.unlocker.ACTIVE"></action>
-
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <category android:name="android.intent.category.DEFAULT" />
 
