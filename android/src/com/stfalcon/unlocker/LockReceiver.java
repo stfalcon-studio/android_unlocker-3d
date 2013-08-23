@@ -13,11 +13,11 @@ import java.io.InputStreamReader;
  * Created by anton on 8/2/13.
  */
 public class LockReceiver extends BroadcastReceiver {
-    private static boolean LockScreenOn;
 
     @Override
     public void onReceive(Context context, Intent intent) {
 
+        //Считываем значение состояния анлокера on/off
         StringBuilder sb = new StringBuilder();
 
         try {
@@ -36,22 +36,22 @@ public class LockReceiver extends BroadcastReceiver {
         String result = sb.toString().trim();
         Log.i("Loger", "File " + result);
 
+        // Есле екран выключили, запускаем локскрин
         if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
             if (result.equals("true")) {
-                Log.i("Loger", "SCREEN ON");
+                Log.i("Loger", "UnlockON");
                 Intent intent1 = new Intent(context, UnlockScreen.class);
                 intent1.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(intent1);
             }
-            //SCREEN OFF
 
         } else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
-            //SCREEN ON
             if (result.equals("true")) {
                 Log.i("Loger", "UnlockOFF");
             }
         }
 
+        //Есле телефон перезапустили, запускаем приложение
         if (("android.intent.action.BOOT_COMPLETED".equals(intent.getAction())) && result.equals("true")) {
             Log.i("Loger", "UnlockON");
             Intent intent1 = new Intent(context, MainActivity.class);

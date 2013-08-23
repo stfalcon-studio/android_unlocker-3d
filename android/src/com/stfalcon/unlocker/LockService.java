@@ -14,7 +14,6 @@ public class LockService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        Log.v("LOGER", "ON BIND");
         return null;
     }
 
@@ -33,7 +32,7 @@ public class LockService extends Service {
         try {
             boolean screenOff = intent.getBooleanExtra("screen_state", false);
         } catch (Exception e) {
-            Log.v("LOGER", "TROUBLE");
+            e.printStackTrace();
         }
     }
 }

@@ -82,7 +82,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         UnlockApp.sPref = getSharedPreferences(MY_PREF, 0);
         boolean isSave = UnlockApp.sPref.getBoolean("isSave", false);
         if (isSave) {
-            showSaveGraph();
+            CheckGesture();
         }
 
 
@@ -111,6 +111,10 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         });
     }
 
+
+    /**
+     * Инициализация всех view
+     */
     public void initView() {
         proc = (TextView) findViewById(R.id.textView6);
         record = (Button) findViewById(R.id.record);
@@ -130,7 +134,9 @@ public class MainActivity extends Activity implements SensorEventListener, View.
 
     }
 
-
+    /**
+     * Заполнение массива нулевыми значениями для отображения прямой линии на графике
+     */
     public void initMass() {
         masShow.clear();
         for (int i = 0; i < 200; i++) {
@@ -138,7 +144,9 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         }
     }
 
-
+    /**
+     * Инициализация поля отображающего графики
+     */
     public void initGraph() {
         graphView = new LineGraphView(this, "Saved");
         graphView.setScalable(true);
@@ -175,7 +183,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
 
-        //init button activated unlocker
+        //Инициализация кнопки включения/выключения
         on_off = (Switch) findViewById(R.id.off_on);
         on_off.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -210,7 +218,10 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         sensorManager.unregisterListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE));
     }
 
-
+    /**
+     * Метод возвращающий значения сенсора, который был задействован
+     * @param event
+     */
     public void onSensorChanged(SensorEvent event) {
         synchronized (this) {
             {
@@ -229,7 +240,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
                             outputZ2.setText("z:" + Float.toString(event.values[2]));
                             double[] gyrData = Comparison.lowFilter(event.values[0], event.values[1], event.values[2]);
                             gyrDataList.add(gyrData);
-                            getPoint(event.values[0], event.values[1], event.values[2], event.sensor.getType());
+                            getPoint(event.values[0], event.values[1], event.values[2]);
                             break;
                     }
 
@@ -239,7 +250,9 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         }
     }
 
-
+    /**
+     * Стартует запись нового жеста
+     */
     public void StartNewGesture() {
         initMass();
         startTime = System.currentTimeMillis();
@@ -252,6 +265,9 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         masSave.clear();
     }
 
+    /**
+     * Останавливает запись нового жеста
+     */
     public void StopRecording() {
         isSensorOn = false;
         isPressed = false;
@@ -263,6 +279,9 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         masSave.clear();
     }
 
+    /**
+     * Стартует запись подтверждающего жеста
+     */
     public void StartConfirmGesture() {
         initMass();
         startTime = System.currentTimeMillis();
@@ -275,12 +294,18 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         layout.removeAllViews();
     }
 
+    /**
+     * Останавливает запись подтверждающего жеста
+     */
     public void StopConfirm() {
         isSensorOn = false;
         isPressed = false;
         Validating();
     }
 
+    /**
+     * Сравнивает записанные жесты
+     */
     public void Validating() {
         layout.removeAllViews();
 
@@ -372,8 +397,13 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         showSaveGraph();
     }
 
-
-    public void getPoint(Float x, Float y, Float z, int type) {
+    /**
+     * Создает точку из данных полученых от гироскопа и записывает её в массив
+     * @param x
+     * @param y
+     * @param z
+     */
+    public void getPoint(Float x, Float y, Float z) {
 
         double acc = x + y + z;
         double point = UnlockApp.lowPassFilterAcc(acc);
@@ -386,6 +416,10 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         showOnGraph(masShow);
     }
 
+    /**
+     * Отображает простой график в реальном времени без применения фильтров
+     * @param mas
+     */
     private void showOnGraph(ArrayList<Double> mas) {
         layout.removeAllViews();
         GraphView.GraphViewData[] accGraphViewsaveData = new GraphView.GraphViewData[mas.size()];
@@ -403,7 +437,10 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         layout.addView(graphView);
     }
 
-
+    /**
+     * Применяет фильтр подавляющий шумы
+     * @return
+     */
     public ArrayList<double[]> filterData() {
         ArrayList<double[]> filterData = new ArrayList<double[]>();
         int len = 0;
@@ -420,6 +457,9 @@ public class MainActivity extends Activity implements SensorEventListener, View.
 
     }
 
+    /**
+     * Опображает график сохраненный в Preferences
+     */
     private void showSaveGraph() {
         double[] savePitch = UnlockApp.loadArrays().get(0);
         double[] saveRoll = UnlockApp.loadArrays().get(1);

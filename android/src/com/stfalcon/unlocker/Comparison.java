@@ -4,37 +4,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Created by user on 7/31/13.
- */
+
 public class Comparison {
     static double kFilteringFactor = 0.2;
 
-    public static double[] prepareArray(double[] array) {
-        try {
-            double offset = 0.00009;
-            int i;
-            for (i = 0; i < array.length; i++) {
-                if (array[i] < offset && array[i] > (-offset)) {
-                } else {
-                    break;
-                }
-            }
-            double[] pArray = Arrays.copyOfRange(array, i, array.length);
-            for (i = pArray.length - 1; i >= 0; i--) {
-                if (pArray[i] < offset && pArray[i] > (-offset)) {
-                } else {
-                    break;
-                }
-            }
-            pArray = Arrays.copyOfRange(pArray, 0, i);
-            return pArray;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
+    /**
+     * Фильтер убирает низкие частоты
+     * @param x
+     * @param y
+     * @param z
+     * @return
+     */
     public static double[] lowFilter(double x, double y, double z) {
         double[] acceleration = new double[3];
         acceleration[0] = x * kFilteringFactor + acceleration[0] * (1.0 - kFilteringFactor);
@@ -52,6 +32,12 @@ public class Comparison {
         return acceleration;
     }
 
+    /**
+     * Обрезает начало или конец массива если значения означают бездействие пользователя
+     * @param arrayX
+     * @param arrayY
+     * @return
+     */
     public static List<double[]> prepareArrays(double[] arrayX, double[] arrayY) {
         try {
             double offset = 0.00006;
@@ -88,6 +74,12 @@ public class Comparison {
         }
     }
 
+    /**
+     * Сравнение графиков по методу Пирсона
+     * @param x
+     * @param y
+     * @return
+     */
     public static double pirsonCompare(double[] x, double[] y) {
         int len = 0;
         if (x.length > y.length) {

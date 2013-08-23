@@ -32,6 +32,10 @@ public class UnlockApp extends Application {
     private static UnlockApp self;
     private KeyguardManager keyguardManager;
 
+    /**
+     * Сохраняет состояние актиности приложения
+     * @param state
+     */
     public void saveActivState(Boolean state) {
 
         SharedPreferences.Editor editor = prefs.edit();
@@ -50,32 +54,12 @@ public class UnlockApp extends Application {
         }
     }
 
-    public static void saveArrayList(ArrayList<double[]> arrayList) {
 
-        SharedPreferences.Editor editor = sPref.edit();
-        String[] pitch = new String[arrayList.size()];
-        for (int i = 0; i < arrayList.size(); i++) {
-            String s = String.valueOf(arrayList.get(i)[0]);
-            pitch[i] = s;
-        }
-        editor.putInt("pitch_size", pitch.length);
-        for (int i = 0; i < pitch.length; i++) {
-            editor.putString("pitch_" + i, pitch[i]);
-        }
-
-        String[] roll = new String[arrayList.size()];
-        for (int i = 0; i < arrayList.size(); i++) {
-            String s = String.valueOf(arrayList.get(i)[1]);
-            roll[i] = s;
-        }
-        editor.putInt("roll_size", roll.length);
-        for (int i = 0; i < roll.length; i++) {
-            editor.putString("roll_" + i, roll[i]);
-        }
-        editor.putBoolean("isSave", true);
-        editor.commit();
-    }
-
+    /**
+     *
+     * @param dpitch
+     * @param droll
+     */
     public static void saveArrays(double[] dpitch, double[] droll) {
 
         SharedPreferences.Editor editor = sPref.edit();
@@ -102,6 +86,11 @@ public class UnlockApp extends Application {
         editor.commit();
     }
 
+    /**
+     *
+     * @param dpitch
+     * @param droll
+     */
     public static void confArrays(double[] dpitch, double[] droll) {
 
         SharedPreferences.Editor editor = sPref.edit();
@@ -128,6 +117,10 @@ public class UnlockApp extends Application {
         editor.commit();
     }
 
+    /**
+     *
+     * @return
+     */
     public static ArrayList<double[]> loadArrayList() {
         int pitchSize = sPref.getInt("pitch_size", 0);
         double[] pitch = new double[pitchSize];
@@ -148,6 +141,10 @@ public class UnlockApp extends Application {
         return arrayList;
     }
 
+    /**
+     *
+     * @return
+     */
     public static ArrayList<double[]> loadArrays() {
         int pitchSize = sPref.getInt("pitch_size", 0);
         double[] pitch = new double[pitchSize];
@@ -168,6 +165,10 @@ public class UnlockApp extends Application {
         return arrayList;
     }
 
+    /**
+     *
+     * @return
+     */
     public static ArrayList<double[]> loadConfArrays() {
         int pitchSize = sPref.getInt("conf_pitch_size", 0);
         double[] pitch = new double[pitchSize];
@@ -188,6 +189,12 @@ public class UnlockApp extends Application {
         return arrayList;
     }
 
+    /**
+     *
+     * @param accData
+     * @param gyrData
+     * @return
+     */
     public static double[] complementaryFilter(double accData[], double gyrData[]) {
         double pitchAcc, rollAcc;
         double pitch = 0;
@@ -215,6 +222,11 @@ public class UnlockApp extends Application {
         return result;
     }
 
+    /**
+     * Уберает низкие частоты
+     * @param acceleration
+     * @return
+     */
     public static double lowPassFilterAcc(double acceleration) {
         double filteredValues = 0;
         filteredValues = acceleration * a + filteredValues * (1.0d - a);
@@ -222,44 +234,7 @@ public class UnlockApp extends Application {
     }
 
 
-    public static double[] pinchFilter(double accData[], double gyrData[]) {
-        double pitchAcc, rollAcc;
-        double pitch = 0;
-        double roll = 0;
-        double[] result = new double[2];
 
-        // Integrate the gyroscope data -> int(angularSpeed) = angle
-        pitch += ((float) gyrData[0] / GYROSCOPE_SENSITIVITY) * dt; // Angle around the X-axis
-        roll -= ((float) gyrData[1] / GYROSCOPE_SENSITIVITY) * dt;    // Angle around the Y-axis
-
-        // Compensate for drift with accelerometer data if !bullshit
-        // Sensitivity = -2 to 2 G at 16Bit -> 2G = 32768 && 0.5G = 8192
-        double forceMagnitudeApprox = Math.abs(accData[0]) + Math.abs(accData[1]) + Math.abs(accData[2]);
-        if (forceMagnitudeApprox > 8192 && forceMagnitudeApprox < 32768) {
-            // Turning around the X axis results in a vector on the Y-axis
-            pitchAcc = Math.atan2((float) accData[1], (float) accData[2]) * 180 / Math.PI;
-            pitch = pitch * 0.98 + pitchAcc * 0.02;
-
-            // Turning around the Y axis results in a vector on the X-axis
-            rollAcc = Math.atan2((float) accData[0], (float) accData[2]) * 180 / Math.PI;
-            roll = roll * 0.98 + rollAcc * 0.02;
-        }
-        result[0] = pitch;
-        result[1] = roll;
-        return result;
-    }
-
-    public static String arrayListToString(ArrayList<double[]> dataList) {
-        String s = "";
-        for (int i = 0; i < dataList.size(); i++) {
-            s += " [ ";
-            for (int j = 0; j < dataList.get(i).length; j++) {
-                s += " " + dataList.get(i)[j];
-            }
-            s += " ] " + "\n";
-        }
-        return s;
-    }
 
     public static UnlockApp getInstance() {
         return self;
