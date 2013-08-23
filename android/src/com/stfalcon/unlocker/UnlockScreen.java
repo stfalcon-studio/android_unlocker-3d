@@ -62,10 +62,7 @@ public class UnlockScreen extends Activity implements SensorEventListener {
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
         btn_move = (Button) findViewById(R.id.btn_move);
-        layout = (LinearLayout) findViewById(R.id.ll_graph);
         tv_compare = (TextView) findViewById(R.id.tv_compare);
-        showSaveGraph();
-
     }
 
     @Override
@@ -140,7 +137,7 @@ public class UnlockScreen extends Activity implements SensorEventListener {
     }
 
     public void onFinishSensorListen() {
-        layout.removeAllViews();
+
         int len = 0;
         if (accDataList.size() > gyrDataList.size()) len = gyrDataList.size();
         else len = accDataList.size();
@@ -197,7 +194,6 @@ public class UnlockScreen extends Activity implements SensorEventListener {
         List<double[]> pList = Comparison.prepareArrays(new_pitch, new_roll);
 
         if (pList == null) {
-            showSaveGraph();
             return;
         }
         double xPirsonKoef = Comparison.pirsonCompare(new_pitch, save_pitch);
@@ -231,28 +227,6 @@ public class UnlockScreen extends Activity implements SensorEventListener {
             UnlockApp.keyguardLock.disableKeyguard();
             finish();
         }
-        layout.addView(graphView);
     }
 
-    private void showSaveGraph() {
-        double[] savePitch = UnlockApp.loadArrays().get(0);
-        double[] saveRoll = UnlockApp.loadArrays().get(1);
-        GraphView.GraphViewData[] pitchGraphViewsaveData = new GraphView.GraphViewData[savePitch.length];
-        for (int i = 0; i < savePitch.length; i++) {
-            pitchGraphViewsaveData[i] = new GraphView.GraphViewData(i, savePitch[i]);
-        }
-        GraphView.GraphViewData[] rollGraphViewsaveData = new GraphView.GraphViewData[saveRoll.length];
-        for (int i = 0; i < saveRoll.length; i++) {
-            rollGraphViewsaveData[i] = new GraphView.GraphViewData(i, saveRoll[i]);
-        }
-        pitchsaveDataSeries = new GraphViewSeries("pitch1", new GraphViewSeries.GraphViewSeriesStyle(Color.RED, 2), pitchGraphViewsaveData);
-        rollsaveDataSeries = new GraphViewSeries("roll1", new GraphViewSeries.GraphViewSeriesStyle(Color.YELLOW, 2), rollGraphViewsaveData);
-        GraphView graphView = new LineGraphView(
-                this // context
-                , "GraphViewDemo" // heading
-        );
-        graphView.addSeries(pitchsaveDataSeries);
-        graphView.addSeries(rollsaveDataSeries);
-        layout.addView(graphView);
-    }
 }

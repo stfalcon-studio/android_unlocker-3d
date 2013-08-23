@@ -34,6 +34,7 @@ public class UnlockApp extends Application {
 
     /**
      * Сохраняет состояние актиности приложения
+     *
      * @param state
      */
     public void saveActivState(Boolean state) {
@@ -56,7 +57,6 @@ public class UnlockApp extends Application {
 
 
     /**
-     *
      * @param dpitch
      * @param droll
      */
@@ -87,7 +87,6 @@ public class UnlockApp extends Application {
     }
 
     /**
-     *
      * @param dpitch
      * @param droll
      */
@@ -118,7 +117,6 @@ public class UnlockApp extends Application {
     }
 
     /**
-     *
      * @return
      */
     public static ArrayList<double[]> loadArrayList() {
@@ -142,7 +140,6 @@ public class UnlockApp extends Application {
     }
 
     /**
-     *
      * @return
      */
     public static ArrayList<double[]> loadArrays() {
@@ -166,7 +163,6 @@ public class UnlockApp extends Application {
     }
 
     /**
-     *
      * @return
      */
     public static ArrayList<double[]> loadConfArrays() {
@@ -190,7 +186,6 @@ public class UnlockApp extends Application {
     }
 
     /**
-     *
      * @param accData
      * @param gyrData
      * @return
@@ -224,6 +219,7 @@ public class UnlockApp extends Application {
 
     /**
      * Уберает низкие частоты
+     *
      * @param acceleration
      * @return
      */
@@ -232,8 +228,6 @@ public class UnlockApp extends Application {
         filteredValues = acceleration * a + filteredValues * (1.0d - a);
         return filteredValues;
     }
-
-
 
 
     public static UnlockApp getInstance() {
@@ -259,9 +253,9 @@ public class UnlockApp extends Application {
             case R.id.rb_medium:
                 return new FACTOR(0.8, 0.5, 0.3);
             case R.id.rb_hard:
-                return new FACTOR(1.0, 0.6, 0.4);
+                return new FACTOR(0.8, 0.5, 0.3);
             default:
-                return new FACTOR(1.4, 0.8, 0.6);
+                return new FACTOR(0.8, 0.5, 0.3);
         }
     }
 

@@ -13,5 +13,10 @@
     <string name="label_tap_to_home">TAP HOME BUTTON TO SKIP</string>
     <string name="label_tap_try_again">TAP TO TRY AGAIN</string>
     <string name="label_unlock_gesture_not_correct">Gesture isn\'t correct</string>
+    <string name="label_main_confirm_gesture">Confirm gesture</string>
+    <string name="label_main_validating">Validating</string>
+    <string name="label_main_just_created">Gesture just created</string>
+    <string name="label_main_check">Check gesture</string>
+    <string name="label_main_gesture_not_correct">Gesture isn\'t correct</string>
 
 </resources>

@@ -9,12 +9,12 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
+import android.view.animation.AnimationUtils;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
-import android.widget.RadioGroup;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -23,7 +23,6 @@ import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.GraphViewSeries;
 import com.jjoe64.graphview.LineGraphView;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,20 +30,22 @@ import java.util.List;
 public class MainActivity extends Activity implements SensorEventListener, View.OnClickListener {
 
     public static String MY_PREF = "my_pref";
-    public static int LOW_Q = R.id.rb_low;
-    public static int MEDIUM_Q = R.id.rb_medium;
-    public static int HARD_Q = R.id.rb_hard;
     SensorManager sensorManager = null;
-    //for accelerometer values
-    TextView outputX;
-    TextView outputY;
-    TextView outputZ;
-    //for orientation values
-    TextView outputX2;
-    TextView outputY2;
-    TextView outputZ2;
-    LinearLayout layout;
-    public Button record, compar;
+    LinearLayout ll_graph;
+    private View ll_record;
+    private View ll_start_stop;
+    private View rl_create;
+    private TextView tv_recording;
+    private TextView tv_new_gesture;
+    private TextView tv_tap_to;
+    private TextView tv_tap_to_new;
+
+    boolean isGestureRecord = false;
+    boolean isStartRecording;
+    boolean isConfirmGesture;
+    boolean isValidation;
+    boolean isGestureCorrect;
+
     TextView proc;
     GraphViewSeries pitchsaveDataSeries, rollsaveDataSeries;
     GraphView graphView;
@@ -52,41 +53,35 @@ public class MainActivity extends Activity implements SensorEventListener, View.
     boolean isSensorOn = false;
     boolean isPressed = false;
     boolean toConfirm = false;
-    double[] temp = new double[3];
+    boolean isGestureNotCorrect;
     ArrayList<Double> masShow = new ArrayList<Double>();
     ArrayList<Double> masSave = new ArrayList<Double>();
     ArrayList<Double> masConfirm = new ArrayList<Double>();
     ArrayList<double[]> accDataList = new ArrayList<double[]>();
     ArrayList<double[]> gyrDataList = new ArrayList<double[]>();
     ArrayList<double[]> filterDataList = new ArrayList<double[]>();
-    private TextView tv_time;
     private Switch on_off;
-    private TextView tv_new_time;
     private Activity context;
-    private RadioGroup rb_quality;
-    private int eventType = 333;
+    private boolean isCheckGesture;
+
+    private View.OnClickListener clickListener;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         context = this;
+        clickListener = this;
 
         initView();
         initGraph();
 
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         startService(new Intent(this, LockService.class));
+        viewToNotCreated();
 
-
-        UnlockApp.sPref = getSharedPreferences(MY_PREF, 0);
-        boolean isSave = UnlockApp.sPref.getBoolean("isSave", false);
-        if (isSave) {
-            CheckGesture();
-        }
-
-
-        //Quality
+        /*//Quality
         int quality = 0;
         if (UnlockApp.sPref.contains("quality")) {
             quality = (UnlockApp.sPref.getInt("quality", R.id.rb_hard));
@@ -95,20 +90,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
             SharedPreferences.Editor editor = UnlockApp.sPref.edit();
             editor.putInt("quality", R.id.rb_hard);
             editor.commit();
-        }
-        Log.v("LOGER", "" + quality);
-
-
-        rb_quality = (RadioGroup) findViewById(R.id.rg_quality);
-        rb_quality.check(quality);
-        rb_quality.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                SharedPreferences.Editor editor = UnlockApp.sPref.edit();
-                editor.putInt("quality", checkedId);
-                editor.commit();
-            }
-        });
+        }*/
     }
 
 
@@ -116,22 +98,17 @@ public class MainActivity extends Activity implements SensorEventListener, View.
      * Инициализация всех view
      */
     public void initView() {
-        proc = (TextView) findViewById(R.id.textView6);
-        record = (Button) findViewById(R.id.record);
-        compar = (Button) findViewById(R.id.compare);
-        layout = (LinearLayout) findViewById(R.id.ll_graph);
-        outputX = (TextView) findViewById(R.id.textView);
-        outputY = (TextView) findViewById(R.id.textView1);
-        outputZ = (TextView) findViewById(R.id.textView2);
-        outputX2 = (TextView) findViewById(R.id.textView3);
-        outputY2 = (TextView) findViewById(R.id.textView4);
-        outputZ2 = (TextView) findViewById(R.id.textView5);
-        tv_time = (TextView) findViewById(R.id.tv_time);
-        tv_new_time = (TextView) findViewById(R.id.tv_new_time);
-        record.setOnClickListener(this);
-        compar.setOnClickListener(this);
-        compar.setEnabled(false);
-
+        ll_record = findViewById(R.id.ll_new_gesture);
+        ll_start_stop = findViewById(R.id.ll_record_gesture);
+        ll_graph = (LinearLayout) findViewById(R.id.ll_graph_view);
+        rl_create = findViewById(R.id.rl_create_gesture);
+        tv_tap_to_new = (TextView) findViewById(R.id.tv_main_tap_to_new);
+        tv_tap_to = (TextView) findViewById(R.id.tv_main_tap_to);
+        tv_new_gesture = (TextView) findViewById(R.id.tv_main_new_gesture);
+        tv_recording = (TextView) findViewById(R.id.tv_main_recording);
+        on_off = (Switch) findViewById(R.id.switch_main);
+        ll_record.setOnClickListener(this);
+        ll_start_stop.setOnClickListener(this);
     }
 
     /**
@@ -149,30 +126,158 @@ public class MainActivity extends Activity implements SensorEventListener, View.
      */
     public void initGraph() {
         graphView = new LineGraphView(this, "Saved");
+        graphView.setBackground(null);
+        graphView.getGraphViewStyle().setGridColor(getResources().getColor(android.R.color.transparent));
+        graphView.getGraphViewStyle().setHorizontalLabelsColor(getResources().getColor(android.R.color.transparent));
+        graphView.getGraphViewStyle().setNumHorizontalLabels(0);
+        graphView.getGraphViewStyle().setNumVerticalLabels(0);
+        graphView.getGraphViewStyle().setVerticalLabelsColor(getResources().getColor(android.R.color.transparent));
+        graphView.getGraphViewStyle().setVerticalLabelsWidth(0);
+        graphView.setPadding(-50, 0, 0, 0);
+        graphView.getGraphViewStyle().setTextSize(0);
         graphView.setScalable(true);
         graphView.setManualYAxisBounds(1.0, -1.0);
+    }
+
+    private void viewToRecordGesture() {
+        rl_create.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_out));
+        rl_create.setVisibility(View.GONE);
+        //ll_start_stop.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
+        ll_start_stop.setVisibility(View.VISIBLE);
+        tv_recording.setText(getString(R.string.main_label_recording));
+        tv_tap_to.setText(getString(R.string.label_tap_to_stop));
+    }
+
+    private void viewToConfirmGesture() {
+        tv_recording.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
+        tv_recording.setText(getString(R.string.label_main_confirm_gesture));
+        tv_tap_to.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
+        tv_tap_to.setText(getString(R.string.label_tap_start));
+    }
+
+    private void viewToValidating() {
+        tv_recording.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
+        tv_recording.setText(getString(R.string.label_main_validating));
+        tv_tap_to.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
+        tv_tap_to.setText(getString(R.string.label_tap_to_stop));
+        ll_start_stop.setBackground(getResources().getDrawable(R.drawable.bg_blue));
+    }
+
+    private void viewToCheckGesture() {
+        rl_create.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_out));
+        rl_create.setVisibility(View.GONE);
+        ll_start_stop.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
+        ll_start_stop.setVisibility(View.VISIBLE);
+        tv_recording.setText(getString(R.string.label_main_check));
+        tv_tap_to.setText(getString(R.string.label_tap_start));
+
+    }
+
+    private void viewToJustCreated() {
+        rl_create.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
+        rl_create.setVisibility(View.VISIBLE);
+        ll_start_stop.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_out));
+        ll_start_stop.setVisibility(View.GONE);
+        tv_new_gesture.setText(getString(R.string.label_main_just_created));
+        tv_tap_to_new.setVisibility(View.GONE);
+        rl_create.setBackground(getResources().getDrawable(R.drawable.bg_green));
+        ll_record.setBackground(null);
+        on_off.setChecked(true);
+        ll_record.setOnClickListener(null);
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                ll_record.setOnClickListener(clickListener);
+                rl_create.startAnimation(AnimationUtils.loadAnimation(context, android.R.anim.fade_in));
+                rl_create.setBackground(getResources().getDrawable(R.drawable.bg_blue));
+                ll_record.setBackground(getResources().getDrawable(R.drawable.gesture_stroke_selector));
+            }
+        }, 3000);
+
+    }
+
+    private void viewToNotCreated() {
+        rl_create.setVisibility(View.VISIBLE);
+        ll_start_stop.setVisibility(View.GONE);
+        tv_new_gesture.setText(getString(R.string.label_new_gesture));
+        rl_create.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
+        ll_record.setBackground(getResources().getDrawable(R.drawable.gesture_stroke_selector));
+        tv_tap_to_new.setVisibility(View.VISIBLE);
+    }
+
+    private void viewToNotCorrect() {
+        tv_recording.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
+        tv_recording.setText(getString(R.string.label_main_gesture_not_correct));
+        tv_tap_to.setText(getString(R.string.label_tap_try_again));
+        ll_start_stop.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
+        ll_start_stop.setBackground(getResources().getDrawable(R.drawable.bg_red));
+
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.record:
+            case R.id.ll_new_gesture:
                 if (!isSensorOn) {
-                    StartNewGesture();
-                    record.setText("STOP");
-                } else if (!toConfirm) {
-                    StopRecording();
-                    record.setText("Record gesture");
-                    compar.setEnabled(true);
+                    if (!isGestureRecord) {
+                        startNewGesture();
+                        viewToRecordGesture();
+                        isStartRecording = true;
+                    }
                 }
                 break;
-            case R.id.compare:
-                if (!isSensorOn) {
-                    StartConfirmGesture();
-                    compar.setText("STOP");
-                } else if (toConfirm) {
-                    StopConfirm();
-                    compar.setText("Compare gesture");
+            case R.id.ll_record_gesture:
+                if (isStartRecording) {
+                    stopRecording();
+                    viewToConfirmGesture();
+                    isStartRecording = false;
+                    isConfirmGesture = true;
+                    isGestureRecord = false;
+                    return;
+                }
+                if (isConfirmGesture) {
+                    startConfirmGesture();
+                    viewToValidating();
+                    isConfirmGesture = false;
+                    isValidation = true;
+                    return;
+                }
+                if (isValidation) {
+                    if (stopConfirm()) {
+                        viewToJustCreated();
+                        isGestureCorrect = true;
+                    } else {
+                        viewToNotCorrect();
+                        isGestureNotCorrect = true;
+                    }
+
+                    isValidation = false;
+                    //isGestureRecord = true;
+                    return;
+                }
+                if (isGestureRecord) {
+                    viewToCheckGesture();
+                    startConfirmGesture();
+                    viewToValidating();
+                    isConfirmGesture = false;
+                    isValidation = true;
+
+                    return;
+                }
+                if (isGestureNotCorrect) {
+                    startConfirmGesture();
+                    viewToValidating();
+                    isConfirmGesture = false;
+                    isValidation = true;
+                    return;
+                }
+                if (isCheckGesture) {
+                    isCheckGesture = false;
+                    startConfirmGesture();
+                    viewToValidating();
+                    isValidation = true;
+                    return;
                 }
                 break;
 
@@ -182,19 +287,35 @@ public class MainActivity extends Activity implements SensorEventListener, View.
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
-
+        UnlockApp.sPref = getSharedPreferences(MY_PREF, 0);
+        final boolean isSave = UnlockApp.sPref.getBoolean("isSave", false);
+        if (isSave) {
+            on_off.setEnabled(true);
+        } else {
+            on_off.setEnabled(false);
+        }
+        if (UnlockApp.prefs.getString(UnlockApp.IS_ON, "false").equals("true")) {
+            on_off.setChecked(true);
+            Log.i("Loger", "IS_ON = " + UnlockApp.prefs.getString(UnlockApp.IS_ON, "false"));
+        }
         //Инициализация кнопки включения/выключения
-        on_off = (Switch) findViewById(R.id.off_on);
         on_off.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 UnlockApp.getInstance().saveActivState(isChecked);
+                if (isChecked) {
+                    if (isSave) {
+                        if (isGestureRecord) {
+                            viewToCheckGesture();
+                            CheckGesture();
+                            isCheckGesture = true;
+                        }
+                    } else {
+                        on_off.setChecked(false);
+                    }
+                }
             }
         });
-        if (UnlockApp.prefs.getString(UnlockApp.IS_ON, "false").equals("true")) {
-            on_off.performClick();
-            Log.i("Loger", "IS_ON = " + UnlockApp.prefs.getString(UnlockApp.IS_ON, "false"));
-        }
 
     }
 
@@ -220,6 +341,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
 
     /**
      * Метод возвращающий значения сенсора, который был задействован
+     *
      * @param event
      */
     public void onSensorChanged(SensorEvent event) {
@@ -228,16 +350,10 @@ public class MainActivity extends Activity implements SensorEventListener, View.
                 if (isSensorOn) {
                     switch (event.sensor.getType()) {
                         case Sensor.TYPE_ACCELEROMETER:
-                            outputX.setText("x:" + Float.toString(event.values[0]));
-                            outputY.setText("y:" + Float.toString(event.values[1]));
-                            outputZ.setText("z:" + Float.toString(event.values[2]));
                             double[] accData = Comparison.lowFilter(event.values[0], event.values[1], event.values[2]);
                             accDataList.add(accData);
                             break;
                         case Sensor.TYPE_GYROSCOPE:
-                            outputX2.setText("x:" + Float.toString(event.values[0]));
-                            outputY2.setText("y:" + Float.toString(event.values[1]));
-                            outputZ2.setText("z:" + Float.toString(event.values[2]));
                             double[] gyrData = Comparison.lowFilter(event.values[0], event.values[1], event.values[2]);
                             gyrDataList.add(gyrData);
                             getPoint(event.values[0], event.values[1], event.values[2]);
@@ -253,7 +369,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
     /**
      * Стартует запись нового жеста
      */
-    public void StartNewGesture() {
+    public void startNewGesture() {
         initMass();
         startTime = System.currentTimeMillis();
         accDataList.clear();
@@ -268,13 +384,13 @@ public class MainActivity extends Activity implements SensorEventListener, View.
     /**
      * Останавливает запись нового жеста
      */
-    public void StopRecording() {
+    public void stopRecording() {
         isSensorOn = false;
         isPressed = false;
         SharedPreferences.Editor editor = UnlockApp.sPref.edit();
         editor.putBoolean("isSave", false);
         editor.commit();
-        Validating();
+        validating();
         masConfirm.addAll(masSave);
         masSave.clear();
     }
@@ -282,7 +398,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
     /**
      * Стартует запись подтверждающего жеста
      */
-    public void StartConfirmGesture() {
+    public void startConfirmGesture() {
         initMass();
         startTime = System.currentTimeMillis();
         accDataList.clear();
@@ -291,23 +407,24 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         isSensorOn = true;
         isPressed = true;
         toConfirm = true;
-        layout.removeAllViews();
+        ll_graph.removeAllViews();
     }
 
     /**
      * Останавливает запись подтверждающего жеста
      */
-    public void StopConfirm() {
+    public boolean stopConfirm() {
         isSensorOn = false;
         isPressed = false;
-        Validating();
+        return validating();
     }
 
     /**
      * Сравнивает записанные жесты
      */
-    public void Validating() {
-        layout.removeAllViews();
+    public boolean validating() {
+        boolean isValid = false;
+        ll_graph.removeAllViews();
 
         filterDataList = filterData();
         double[] pArr = new double[filterDataList.size()];
@@ -321,7 +438,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         List<double[]> pList = Comparison.prepareArrays(pArr, rArr);
         if (pList == null) {
             Toast.makeText(context, getString(R.string.try_again), Toast.LENGTH_SHORT).show();
-            return;
+            return false;
         }
         pArr = pList.get(0);
         rArr = pList.get(1);
@@ -333,12 +450,20 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         for (int i = 0; i < rArr.length; i++) {
             rollGraphViewData[i] = new GraphView.GraphViewData(i, rArr[i]);
         }
-
-        GraphViewSeries pitchDataSeries = new GraphViewSeries("pitch", new GraphViewSeries.GraphViewSeriesStyle(Color.BLACK, 4), pitchGraphViewData);
-        GraphViewSeries rollDataSeries = new GraphViewSeries("roll", new GraphViewSeries.GraphViewSeriesStyle(Color.RED, 4), rollGraphViewData);
+        GraphViewSeries rollDataSeries = null;
+        if (isStartRecording) {
+            rollDataSeries = new GraphViewSeries("roll",
+                    new GraphViewSeries.GraphViewSeriesStyle(
+                            getResources().getColor(R.color.green_line),
+                            getResources().getDimensionPixelSize(R.dimen.line_width)), rollGraphViewData);
+        } else {
+            rollDataSeries = new GraphViewSeries("roll",
+                    new GraphViewSeries.GraphViewSeriesStyle(
+                            getResources().getColor(R.color.white_line),
+                            getResources().getDimensionPixelSize(R.dimen.line_width)), rollGraphViewData);
+        }
 
         boolean isSave = UnlockApp.sPref.getBoolean("isSave", false);
-        boolean isConfirm = UnlockApp.sPref.getBoolean("isConfirm", false);
 
         if (isSave) {
             double savePitch[] = UnlockApp.loadArrays().get(0);
@@ -351,20 +476,29 @@ public class MainActivity extends Activity implements SensorEventListener, View.
             for (int i = 0; i < saveRoll.length; i++) {
                 rollGraphViewsaveData[i] = new GraphView.GraphViewData(i, saveRoll[i]);
             }
-            pitchsaveDataSeries = new GraphViewSeries("pitch1", new GraphViewSeries.GraphViewSeriesStyle(Color.GREEN, 2), pitchGraphViewsaveData);
-            rollsaveDataSeries = new GraphViewSeries("roll1", new GraphViewSeries.GraphViewSeriesStyle(Color.YELLOW, 2), rollGraphViewsaveData);
+            rollsaveDataSeries = new GraphViewSeries("roll1", new GraphViewSeries.GraphViewSeriesStyle(
+                    getResources().getColor(R.color.yellow_line),
+                    getResources().getDimensionPixelSize(R.dimen.line_width)), rollGraphViewsaveData);
         }
 
         GraphView graphView = new LineGraphView(
                 this // context
                 , "New Gesture" // heading
         );
+        graphView.setBackground(null);
+        graphView.getGraphViewStyle().setGridColor(getResources().getColor(android.R.color.transparent));
+        graphView.getGraphViewStyle().setHorizontalLabelsColor(getResources().getColor(android.R.color.transparent));
+        graphView.getGraphViewStyle().setNumHorizontalLabels(0);
+        graphView.getGraphViewStyle().setNumVerticalLabels(0);
+        graphView.getGraphViewStyle().setVerticalLabelsColor(getResources().getColor(android.R.color.transparent));
+        graphView.getGraphViewStyle().setVerticalLabelsWidth(0);
+        graphView.setPadding(-50, 0, 0, 0);
+        graphView.getGraphViewStyle().setTextSize(0);
         //graphView.addSeries(pitchDataSeries); // data
         graphView.addSeries(rollDataSeries); // data
         if (isSave) {
             double savePitch[] = UnlockApp.loadArrays().get(0);
             double saveRoll[] = UnlockApp.loadArrays().get(1);
-            //graphView.addSeries(pitchsaveDataSeries);
             graphView.addSeries(rollsaveDataSeries);
             double[] x = pArr;
             double[] x1 = savePitch;
@@ -377,20 +511,17 @@ public class MainActivity extends Activity implements SensorEventListener, View.
             boolean unlock = (xPirsonKoef + yPirsonKoef >= factor.getFactor())
                     && ((xPirsonKoef > factor.getPitchFactor() && yPirsonKoef > factor.getRollFactor())
                     || (yPirsonKoef > factor.getPitchFactor() && xPirsonKoef > factor.getRollFactor()));
-            proc.setText("Unlock: " + unlock + " " + "compare Pitch = " +
-                    new DecimalFormat("#.##").format(xPirsonKoef) + " " +
-                    "Roll = " + new DecimalFormat("#.##").format(yPirsonKoef));
-            tv_new_time.setText("Time: " + new DecimalFormat("#.##").format((System.currentTimeMillis() - startTime) / 1000));
             if (toConfirm && unlock) {
                 UnlockApp.confArrays(pArr, rArr);
+                isValid = true;
             }
         }
-        layout.addView(graphView);
+        ll_graph.addView(graphView);
         if (!isSave) {
             UnlockApp.saveArrays(pArr, rArr);
-            tv_time.setText("Time: " + new DecimalFormat("#.##").format((System.currentTimeMillis() - startTime) / 1000));
         }
         toConfirm = false;
+        return isValid;
     }
 
     public void CheckGesture() {
@@ -399,6 +530,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
 
     /**
      * Создает точку из данных полученых от гироскопа и записывает её в массив
+     *
      * @param x
      * @param y
      * @param z
@@ -418,32 +550,34 @@ public class MainActivity extends Activity implements SensorEventListener, View.
 
     /**
      * Отображает простой график в реальном времени без применения фильтров
+     *
      * @param mas
      */
     private void showOnGraph(ArrayList<Double> mas) {
-        layout.removeAllViews();
+        ll_graph.removeAllViews();
         GraphView.GraphViewData[] accGraphViewsaveData = new GraphView.GraphViewData[mas.size()];
         for (int i = 0; i < mas.size(); i++) {
             accGraphViewsaveData[i] = new GraphView.GraphViewData(i, mas.get(i));
         }
         GraphViewSeries accGraphViewSeries1 = new GraphViewSeries("acc", new GraphViewSeries.GraphViewSeriesStyle(Color.BLACK, 4), accGraphViewsaveData);
-        GraphViewSeries accGraphViewSeries = new GraphViewSeries("acc", new GraphViewSeries.GraphViewSeriesStyle(Color.GREEN, 2), accGraphViewsaveData);
+        GraphViewSeries accGraphViewSeries = new GraphViewSeries("acc",
+                new GraphViewSeries.GraphViewSeriesStyle(getResources().getColor(R.color.green_line),
+                        getResources().getDimensionPixelSize(R.dimen.line_width)), accGraphViewsaveData);
 
-
-        //GraphView graphView = new LineGraphView(this, "Saved");
         graphView.removeAllSeries();
         graphView.addSeries(accGraphViewSeries1);
         graphView.addSeries(accGraphViewSeries);
-        layout.addView(graphView);
+        ll_graph.addView(graphView);
     }
 
     /**
      * Применяет фильтр подавляющий шумы
+     *
      * @return
      */
     public ArrayList<double[]> filterData() {
         ArrayList<double[]> filterData = new ArrayList<double[]>();
-        int len = 0;
+        int len;
         if (accDataList.size() > gyrDataList.size()) len = gyrDataList.size();
         else len = accDataList.size();
         for (int i = 0; i < len; i++) {
@@ -471,15 +605,15 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         for (int i = 0; i < saveRoll.length; i++) {
             rollGraphViewsaveData[i] = new GraphView.GraphViewData(i, saveRoll[i]);
         }
-        pitchsaveDataSeries = new GraphViewSeries("pitch1", new GraphViewSeries.GraphViewSeriesStyle(Color.RED, 2), pitchGraphViewsaveData);
-        rollsaveDataSeries = new GraphViewSeries("roll1", new GraphViewSeries.GraphViewSeriesStyle(Color.YELLOW, 2), rollGraphViewsaveData);
+        rollsaveDataSeries = new GraphViewSeries("roll1", new GraphViewSeries.GraphViewSeriesStyle(
+                getResources().getColor(R.color.white_line),
+                getResources().getDimensionPixelSize(R.dimen.line_width)), rollGraphViewsaveData);
         GraphView graphView = new LineGraphView(
                 this // context
                 , "Saved gesture" // heading
         );
-        //graphView.addSeries(pitchsaveDataSeries);
         graphView.addSeries(rollsaveDataSeries);
-        layout.addView(graphView);
+        ll_graph.addView(graphView);
     }
 
 
