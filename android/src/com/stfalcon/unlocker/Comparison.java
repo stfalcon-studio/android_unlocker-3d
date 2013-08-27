@@ -10,6 +10,7 @@ public class Comparison {
 
     /**
      * Фильтер убирает низкие частоты
+     *
      * @param x
      * @param y
      * @param z
@@ -34,13 +35,14 @@ public class Comparison {
 
     /**
      * Обрезает начало или конец массива если значения означают бездействие пользователя
+     *
      * @param arrayX
      * @param arrayY
      * @return
      */
     public static List<double[]> prepareArrays(double[] arrayX, double[] arrayY) {
         try {
-            double offset = 0.00006;
+            double offset = 0.00009;
             int len = 0;
             if (arrayX.length > arrayY.length) {
                 len = arrayY.length;
@@ -76,6 +78,7 @@ public class Comparison {
 
     /**
      * Сравнение графиков по методу Пирсона
+     *
      * @param x
      * @param y
      * @return

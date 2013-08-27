@@ -63,6 +63,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
     private Switch on_off;
     private Activity context;
     private boolean isCheckGesture;
+    private final int viewGraphMassSize = 50;
 
     private View.OnClickListener clickListener;
 
@@ -116,7 +117,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
      */
     public void initMass() {
         masShow.clear();
-        for (int i = 0; i < 200; i++) {
+        for (int i = 0; i < viewGraphMassSize; i++) {
             masShow.add(0.0);
         }
     }
@@ -144,6 +145,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         rl_create.setVisibility(View.GONE);
         //ll_start_stop.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
         ll_start_stop.setVisibility(View.VISIBLE);
+        ll_start_stop.setBackground(getResources().getDrawable(R.drawable.bg_blue));
         tv_recording.setText(getString(R.string.main_label_recording));
         tv_tap_to.setText(getString(R.string.label_tap_to_stop));
     }
@@ -229,7 +231,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
                 break;
             case R.id.ll_record_gesture:
                 if (isStartRecording) {
-                    stopRecording();
+                    stopRecording(true);
                     viewToConfirmGesture();
                     isStartRecording = false;
                     isConfirmGesture = true;
@@ -262,7 +264,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
                     viewToValidating();
                     isConfirmGesture = false;
                     isValidation = true;
-
+                    isGestureRecord = false;
                     return;
                 }
                 if (isGestureNotCorrect) {
@@ -270,6 +272,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
                     viewToValidating();
                     isConfirmGesture = false;
                     isValidation = true;
+                    isGestureNotCorrect = false;
                     return;
                 }
                 if (isCheckGesture) {
@@ -305,10 +308,10 @@ public class MainActivity extends Activity implements SensorEventListener, View.
                 UnlockApp.getInstance().saveActivState(isChecked);
                 if (isChecked) {
                     if (isSave) {
-                        if (isGestureRecord) {
+                        if (!isGestureCorrect) {
                             viewToCheckGesture();
                             CheckGesture();
-                            isCheckGesture = true;
+                            isConfirmGesture = true;
                         }
                     } else {
                         on_off.setChecked(false);
@@ -322,9 +325,8 @@ public class MainActivity extends Activity implements SensorEventListener, View.
     @Override
     protected void onResume() {
         super.onResume();
-
-        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), sensorManager.SENSOR_DELAY_FASTEST);
-        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), sensorManager.SENSOR_DELAY_FASTEST);
+        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_GAME);
+        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_GAME);
     }
 
     @Override
@@ -344,7 +346,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
      *
      * @param event
      */
-    public void onSensorChanged(SensorEvent event) {
+    public void onSensorChanged(final SensorEvent event) {
         synchronized (this) {
             {
                 if (isSensorOn) {
@@ -384,14 +386,16 @@ public class MainActivity extends Activity implements SensorEventListener, View.
     /**
      * Останавливает запись нового жеста
      */
-    public void stopRecording() {
+    public void stopRecording(boolean toSave) {
         isSensorOn = false;
         isPressed = false;
-        SharedPreferences.Editor editor = UnlockApp.sPref.edit();
-        editor.putBoolean("isSave", false);
-        editor.commit();
-        validating();
-        masConfirm.addAll(masSave);
+        if (toSave) {
+            SharedPreferences.Editor editor = UnlockApp.sPref.edit();
+            editor.putBoolean("isSave", false);
+            editor.commit();
+            validating();
+            masConfirm.addAll(masSave);
+        }
         masSave.clear();
     }
 
@@ -541,7 +545,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         double point = UnlockApp.lowPassFilterAcc(acc);
         masShow.add(point);
         masSave.add(point);
-        if (masShow.size() > 200) {
+        if (masShow.size() > viewGraphMassSize) {
             masShow.remove(0);
 
         }
@@ -597,6 +601,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
     private void showSaveGraph() {
         double[] savePitch = UnlockApp.loadArrays().get(0);
         double[] saveRoll = UnlockApp.loadArrays().get(1);
+
         GraphView.GraphViewData[] pitchGraphViewsaveData = new GraphView.GraphViewData[savePitch.length];
         for (int i = 0; i < savePitch.length; i++) {
             pitchGraphViewsaveData[i] = new GraphView.GraphViewData(i, savePitch[i]);
@@ -605,6 +610,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         for (int i = 0; i < saveRoll.length; i++) {
             rollGraphViewsaveData[i] = new GraphView.GraphViewData(i, saveRoll[i]);
         }
+        Log.v("LOGER", rollGraphViewsaveData.length + "size");
         rollsaveDataSeries = new GraphViewSeries("roll1", new GraphViewSeries.GraphViewSeriesStyle(
                 getResources().getColor(R.color.white_line),
                 getResources().getDimensionPixelSize(R.dimen.line_width)), rollGraphViewsaveData);
@@ -612,10 +618,31 @@ public class MainActivity extends Activity implements SensorEventListener, View.
                 this // context
                 , "Saved gesture" // heading
         );
+        graphView.setBackground(null);
+        graphView.getGraphViewStyle().setGridColor(getResources().getColor(android.R.color.transparent));
+        graphView.getGraphViewStyle().setHorizontalLabelsColor(getResources().getColor(android.R.color.transparent));
+        graphView.getGraphViewStyle().setNumHorizontalLabels(0);
+        graphView.getGraphViewStyle().setNumVerticalLabels(0);
+        graphView.getGraphViewStyle().setVerticalLabelsColor(getResources().getColor(android.R.color.transparent));
+        graphView.getGraphViewStyle().setVerticalLabelsWidth(0);
+        graphView.setPadding(-50, 0, 0, 0);
+        graphView.getGraphViewStyle().setTextSize(0);
+        graphView.setScalable(true);
+        graphView.setManualYAxisBounds(0.0009, -0.0009);
         graphView.addSeries(rollsaveDataSeries);
         ll_graph.addView(graphView);
     }
 
-
+    @Override
+    public void onBackPressed() {
+        if (isStartRecording || isGestureNotCorrect) {
+            viewToNotCreated();
+            stopRecording(false);
+            isStartRecording = false;
+            isGestureNotCorrect = false;
+            return;
+        }
+        super.onBackPressed();
+    }
 }
 
