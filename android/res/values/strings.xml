@@ -2,7 +2,7 @@
 <resources>
 
     <string name="app_name">unlocker</string>
-    <string name="try_again">Повторите еще раз...</string>
+    <string name="try_again">Try again...</string>
     <string name="label_main_unlocker">Unlocker 3D</string>
     <string name="label_tap_start">TAP TO START</string>
     <string name="label_new_gesture">New Gesture</string>
@@ -18,5 +18,6 @@
     <string name="label_main_just_created">Gesture just created</string>
     <string name="label_main_check">Check gesture</string>
     <string name="label_main_gesture_not_correct">Gesture isn\'t correct</string>
+    <string name="label_unlock_move_to_unlock">MOVE TO UNLOCK</string>
 
 </resources>

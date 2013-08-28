@@ -246,17 +246,7 @@ public class UnlockApp extends Application {
     }
 
     public FACTOR getFactors() {
-        int quality = sPref.getInt("quality", R.id.rb_hard);
-        switch (quality) {
-            case R.id.rb_low:
-                return new FACTOR(0.6, 0.5, 0.1);
-            case R.id.rb_medium:
-                return new FACTOR(0.7, 0.4, 0.3);
-            case R.id.rb_hard:
-                return new FACTOR(0.8, 0.6, 0.5);
-            default:
-                return new FACTOR(0.8, 0.5, 0.3);
-        }
+        return new FACTOR(0.8, 0.6, 0.5);
     }
 
     public class FACTOR {
