@@ -123,6 +123,4 @@ public class Comparison {
         double rxy = dxy / (mqx * mqy);
         return rxy;
     }
-
-
 }

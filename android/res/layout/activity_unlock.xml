@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:id="@+id/rl_unlock_screen"
                 android:background="@drawable/bg_red">
 
     <LinearLayout
-
             android:id="@+id/ll_clock_header"
             android:layout_marginTop="84dp"
             android:layout_marginBottom="16dp"
@@ -16,8 +14,6 @@
             android:layout_width="match_parent"
             android:orientation="vertical"
             android:gravity="center_horizontal"
-
-
             >
 
         <DigitalClock
@@ -52,7 +48,7 @@
             android:visibility="gone"
             android:id="@+id/ll_move_to_unlock"
             >
-        <TextView android:id="@+id/tv_unclock_move"
+        <TextView android:id="@+id/tv_unlock_move"
                   android:layout_width="wrap_content"
                   android:layout_height="wrap_content"
                   android:text="@string/label_unlock_move_to_unlock"
@@ -76,7 +72,7 @@
             >
 
         <TextView
-                android:id="@+id/tv_unlock_gesture_isnt_coor"
+                android:id="@+id/tv_unlock_gesture_not_correct"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/label_unlock_gesture_not_correct"
@@ -101,7 +97,7 @@
                 android:layout_marginTop="16dp"
 
                 />
-        <TextView android:id="@+id/tv_unclock_tap_home"
+        <TextView android:id="@+id/tv_unlock_tap_home"
                   android:layout_width="wrap_content"
                   android:layout_height="wrap_content"
                   android:text="@string/label_tap_to_home"

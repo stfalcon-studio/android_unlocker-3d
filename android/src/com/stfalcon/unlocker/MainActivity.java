@@ -11,7 +11,6 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.widget.CompoundButton;
@@ -47,7 +46,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
     boolean isValidation;
     boolean isGestureCorrect;
 
-    GraphViewSeries rollsaveDataSeries;
+    GraphViewSeries rollSaveDataSeries;
     GraphView graphView;
     double startTime;
     boolean isSensorOn = false;
@@ -74,10 +73,8 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         setContentView(R.layout.activity_main);
         context = this;
         clickListener = this;
-
         initView();
         initGraph();
-
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         startService(new Intent(this, LockService.class));
         viewToNotCreated();
@@ -205,7 +202,6 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         tv_tap_to.setText(getString(R.string.label_tap_try_again));
         ll_start_stop.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
         ll_start_stop.setBackground(getResources().getDrawable(R.drawable.bg_red));
-
     }
 
     @Override
@@ -238,11 +234,11 @@ public class MainActivity extends Activity implements SensorEventListener, View.
                 }
                 if (isValidation) {
                     if (stopConfirm()) {
-                        viewToJustCreated();
                         isGestureCorrect = true;
+                        viewToJustCreated();
                     } else {
-                        viewToNotCorrect();
                         isGestureNotCorrect = true;
+                        viewToNotCorrect();
                     }
 
                     isValidation = false;
@@ -282,21 +278,19 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         super.onPostCreate(savedInstanceState);
         UnlockApp.sPref = getSharedPreferences(MY_PREF, 0);
         final boolean isSave = UnlockApp.sPref.getBoolean("isSave", false);
-        if (isSave) {
+        if (isSave && UnlockApp.prefs.getString(UnlockApp.IS_ON, "false").equals("true")) {
             on_off.setEnabled(true);
         } else {
             on_off.setEnabled(false);
-        }
-        if (UnlockApp.prefs.getString(UnlockApp.IS_ON, "false").equals("true")) {
-            on_off.setChecked(true);
         }
         //Инициализация кнопки включения/выключения
         on_off.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 UnlockApp.getInstance().saveActivState(isChecked);
+                final boolean isSaveGesture = UnlockApp.sPref.getBoolean("isSave", false);
                 if (isChecked) {
-                    if (isSave) {
+                    if (isSaveGesture) {
                         if (!isGestureCorrect) {
                             viewToCheckGesture();
                             CheckGesture();
@@ -335,6 +329,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
      *
      * @param event
      */
+
     public void onSensorChanged(final SensorEvent event) {
         synchronized (this) {
             {
@@ -350,7 +345,6 @@ public class MainActivity extends Activity implements SensorEventListener, View.
                             getPoint(event.values[0], event.values[1], event.values[2]);
                             break;
                     }
-
                 }
 
             }
@@ -464,7 +458,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
             for (int i = 0; i < saveRoll.length; i++) {
                 rollGraphViewsaveData[i] = new GraphView.GraphViewData(i, saveRoll[i]);
             }
-            rollsaveDataSeries = new GraphViewSeries("roll1", new GraphViewSeries.GraphViewSeriesStyle(
+            rollSaveDataSeries = new GraphViewSeries("roll1", new GraphViewSeries.GraphViewSeriesStyle(
                     getResources().getColor(R.color.yellow_line),
                     getResources().getDimensionPixelSize(R.dimen.line_width)), rollGraphViewsaveData);
         }
@@ -486,7 +480,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         if (isSave) {
             double savePitch[] = UnlockApp.loadArrays().get(0);
             double saveRoll[] = UnlockApp.loadArrays().get(1);
-            graphView.addSeries(rollsaveDataSeries);
+            graphView.addSeries(rollSaveDataSeries);
             double[] x = pArr;
             double[] x1 = savePitch;
             double[] y = rArr;
@@ -586,8 +580,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         for (int i = 0; i < saveRoll.length; i++) {
             rollGraphViewsaveData[i] = new GraphView.GraphViewData(i, saveRoll[i]);
         }
-        Log.v("LOGER", rollGraphViewsaveData.length + "size");
-        rollsaveDataSeries = new GraphViewSeries("roll1", new GraphViewSeries.GraphViewSeriesStyle(
+        rollSaveDataSeries = new GraphViewSeries("roll1", new GraphViewSeries.GraphViewSeriesStyle(
                 getResources().getColor(R.color.white_line),
                 getResources().getDimensionPixelSize(R.dimen.line_width)), rollGraphViewsaveData);
         GraphView graphView = new LineGraphView(
@@ -605,7 +598,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         graphView.getGraphViewStyle().setTextSize(0);
         graphView.setScalable(true);
         graphView.setManualYAxisBounds(0.0009, -0.0009);
-        graphView.addSeries(rollsaveDataSeries);
+        graphView.addSeries(rollSaveDataSeries);
         ll_graph.addView(graphView);
     }
 
@@ -616,6 +609,8 @@ public class MainActivity extends Activity implements SensorEventListener, View.
             stopRecording(false);
             isStartRecording = false;
             isGestureNotCorrect = false;
+            isConfirmGesture = false;
+            isValidation = false;
             return;
         }
         super.onBackPressed();

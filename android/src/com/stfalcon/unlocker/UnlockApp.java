@@ -22,12 +22,7 @@ public class UnlockApp extends Application {
     public Context context;
     public static String MY_PREF = "mupref";
     public static KeyguardManager.KeyguardLock keyguardLock;
-    /*  public static double OFFSET_KOEF = 1.0;
-      public static double OFFSET_KOEF_PITCH = 0.6;
-      public static double OFFSET_KOEF_ROLL = 0.4;*/
     private static double GYROSCOPE_SENSITIVITY = 65.536;
-    //private static double GYROSCOPE_SENSITIVITY = 10;
-    private static double ACCELEROMETER_SENSITIVITY = 8192.0;
     private static double dt = 0.005;
     private static UnlockApp self;
     private KeyguardManager keyguardManager;
@@ -114,29 +109,6 @@ public class UnlockApp extends Application {
         }
         editor.putBoolean("isConfirm", true);
         editor.commit();
-    }
-
-    /**
-     * @return
-     */
-    public static ArrayList<double[]> loadArrayList() {
-        int pitchSize = sPref.getInt("pitch_size", 0);
-        double[] pitch = new double[pitchSize];
-        for (int i = 0; i < pitchSize; i++) {
-            pitch[i] = Double.valueOf(sPref.getString("pitch_" + i, "0"));
-        }
-
-        int rollSize = sPref.getInt("roll_size", 0);
-        double[] roll = new double[rollSize];
-        for (int i = 0; i < rollSize; i++) {
-            roll[i] = Double.valueOf(sPref.getString("roll_" + i, "0"));
-        }
-
-        ArrayList<double[]> arrayList = new ArrayList<double[]>();
-        for (int i = 0; i < rollSize; i++) {
-            arrayList.add(new double[]{pitch[i], roll[i]});
-        }
-        return arrayList;
     }
 
     /**

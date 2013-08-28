@@ -4,8 +4,6 @@ import android.app.Activity;
 import android.app.WallpaperManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
@@ -13,30 +11,23 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.os.Handler;
-import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.AnimationUtils;
-import android.widget.LinearLayout;
 
 import android.widget.TextView;
-import com.jjoe64.graphview.GraphView;
-import com.jjoe64.graphview.GraphViewSeries;
-import com.jjoe64.graphview.LineGraphView;
 
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
 /**
  * Created by user on 8/2/13.
  */
-public class UnlockScreen extends Activity implements SensorEventListener, View.OnClickListener {       ;
+public class UnlockScreen extends Activity implements SensorEventListener, View.OnClickListener {
+    ;
     boolean isPressed = false;
     long startTime;
     ArrayList<double[]> accDataList = new ArrayList<double[]>();
@@ -51,7 +42,6 @@ public class UnlockScreen extends Activity implements SensorEventListener, View.
     private View ll_gesture_not_correct;
     private Context context;
     Drawable wallpaperDrawable;
-    private Boolean isStartRecord = false;
     private Typeface robotoThin;
 
     @Override
@@ -82,7 +72,7 @@ public class UnlockScreen extends Activity implements SensorEventListener, View.
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         ll_gesture_not_correct = findViewById(R.id.ll_gesture_not_correct);
         ll_gesture_not_correct.setOnClickListener(this);
-        TextView tv_gesture_not_correct = (TextView) findViewById(R.id.tv_unlock_gesture_isnt_coor);
+        TextView tv_gesture_not_correct = (TextView) findViewById(R.id.tv_unlock_gesture_not_correct);
         tv_gesture_not_correct.setTypeface(robotoThin);
         TextView tv_date = (TextView) findViewById(R.id.tv_date);
         tv_date.setText(getDateString());
@@ -111,14 +101,15 @@ public class UnlockScreen extends Activity implements SensorEventListener, View.
     }
 
     private void viewToUnlockScreen() {
-
         View rl_unlock_screen = findViewById(R.id.rl_unlock_screen);
         rl_unlock_screen.setBackground(wallpaperDrawable);
+        rl_unlock_screen.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
         ll_move_to_unlock.setVisibility(View.VISIBLE);
         ll_gesture_not_correct.setVisibility(View.GONE);
     }
 
     private void viewToGestureNotCorrect() {
+        rl_unlock_screen.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
         rl_unlock_screen.setBackground(getResources().getDrawable(R.drawable.bg_red));
         ll_move_to_unlock.setVisibility((View.GONE));
         ll_gesture_not_correct.setVisibility(View.VISIBLE);
@@ -126,7 +117,6 @@ public class UnlockScreen extends Activity implements SensorEventListener, View.
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-
         synchronized (this) {
             if (isUnlockScreen) {
                 switch (event.sensor.getType()) {

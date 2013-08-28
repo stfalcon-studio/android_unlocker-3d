@@ -43,7 +43,6 @@
                 android:layout_gravity="center_horizontal"
                 android:id="@+id/tv_main_tap_to"
                 />
-
     </LinearLayout>
 
 
@@ -76,8 +75,8 @@
                     android:layout_gravity="center_horizontal"
                     android:textSize="14sp"
                     android:textColor="#ffffff"
-                    android:textOn="ON"
-                    android:textOff="OFF"
+                    android:textOn="@string/switch_text_on"
+                    android:textOff="@string/switch_text_off"
                     android:id="@+id/switch_main"
                     >
             </Switch>
