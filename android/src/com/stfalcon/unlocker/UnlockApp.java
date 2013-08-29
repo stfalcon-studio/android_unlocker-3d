@@ -218,7 +218,7 @@ public class UnlockApp extends Application {
     }
 
     public FACTOR getFactors() {
-        return new FACTOR(0.8, 0.6, 0.5);
+        return new FACTOR(0.8, 0.4, 0.4);
     }
 
     public class FACTOR {

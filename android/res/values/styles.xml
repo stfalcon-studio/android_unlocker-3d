@@ -17,4 +17,10 @@
         <!-- All customizations that are NOT specific to a particular API-level can go here. -->
     </style>
 
+    <style name="Switch" parent="android:TextAppearance.Holo.Small">
+        <!-- Switch thumb asset presents a dark background. -->
+        <item name="android:textColor">#ffffff</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
 </resources>
