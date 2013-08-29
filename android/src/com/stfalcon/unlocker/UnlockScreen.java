@@ -66,6 +66,8 @@ public class UnlockScreen extends Activity implements SensorEventListener, View.
 
     private void initView() {
         robotoThin = Typeface.createFromAsset(this.getAssets(), "Roboto-Thin.ttf");
+        DigitalClockHM digitalClockHM = (DigitalClockHM) findViewById(R.id.clock);
+        digitalClockHM.setTypeface(robotoThin);
         Window wind = getWindow();
         wind.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
         this.getWindow().setType(WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG);
