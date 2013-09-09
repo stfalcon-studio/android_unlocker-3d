@@ -16,14 +16,14 @@ import java.util.ArrayList;
  */
 public class UnlockApp extends Application {
 
-    private static double a = 0.1;
+    private static final double a = 0.1;
     public static final String IS_ON = "ison";
     public static SharedPreferences sPref, prefs;
     public Context context;
-    public static String MY_PREF = "mupref";
+    public static final String MY_PREF = "mupref";
     public static KeyguardManager.KeyguardLock keyguardLock;
-    private static double GYROSCOPE_SENSITIVITY = 65.536;
-    private static double dt = 0.005;
+    private static final double GYROSCOPE_SENSITIVITY = 65.536;
+    private static final double dt = 0.005;
     private static UnlockApp self;
     private KeyguardManager keyguardManager;
 
@@ -37,8 +37,6 @@ public class UnlockApp extends Application {
         SharedPreferences.Editor editor = prefs.edit();
         editor.putString(IS_ON, String.valueOf(state));
         editor.commit();
-        Log.i("Loger", "PrefUnlockON =" + String.valueOf(state));
-
         String FILENAME = "active";
         String string = String.valueOf(state);
         try {
@@ -153,7 +151,6 @@ public class UnlockApp extends Application {
         ArrayList<double[]> arrayList = new ArrayList<double[]>();
         arrayList.add(pitch);
         arrayList.add(roll);
-
         return arrayList;
     }
 
@@ -179,7 +176,6 @@ public class UnlockApp extends Application {
             // Turning around the X axis results in a vector on the Y-axis
             pitchAcc = Math.atan2((float) accData[1], (float) accData[2]) * 180 / Math.PI;
             pitch = pitch * 0.98 + pitchAcc * 0.02;
-
             // Turning around the Y axis results in a vector on the X-axis
             rollAcc = Math.atan2((float) accData[0], (float) accData[2]) * 180 / Math.PI;
             roll = roll * 0.98 + rollAcc * 0.02;
@@ -218,13 +214,13 @@ public class UnlockApp extends Application {
     }
 
     public FACTOR getFactors() {
-        return new FACTOR(0.8, 0.4, 0.4);
+        return new FACTOR(0.5, 0.3, 0.2);
     }
 
     public class FACTOR {
-        double factor;
-        double pitch_factor;
-        double roll_factor;
+        final double factor;
+        final double pitch_factor;
+        final double roll_factor;
 
         public FACTOR(double factor, double pitch_factor, double roll_factor) {
             this.factor = factor;

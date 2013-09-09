@@ -27,12 +27,10 @@ import java.util.List;
  * Created by user on 8/2/13.
  */
 public class UnlockScreen extends Activity implements SensorEventListener, View.OnClickListener {
-    ;
-    boolean isPressed = false;
-    long startTime;
-    ArrayList<double[]> accDataList = new ArrayList<double[]>();
-    ArrayList<double[]> gyrDataList = new ArrayList<double[]>();
-    ArrayList<double[]> filterDataList = new ArrayList<double[]>();
+
+    final ArrayList<double[]> accDataList = new ArrayList<double[]>();
+    final ArrayList<double[]> gyrDataList = new ArrayList<double[]>();
+    final ArrayList<double[]> filterDataList = new ArrayList<double[]>();
     boolean isSensorOn = false;
     boolean isUnlockScreen = true;
     private SensorManager sensorManager;
@@ -126,14 +124,12 @@ public class UnlockScreen extends Activity implements SensorEventListener, View.
                         double mGyr = event.values[0] + event.values[1] + event.values[2];
                         boolean isMove = mGyr > 0.4 || mGyr < -0.4;
                         if (isMove && !isSensorOn) {
-                            startTime = System.currentTimeMillis();
                             accDataList.clear();
                             gyrDataList.clear();
                             filterDataList.clear();
                             isSensorOn = true;
-                            isPressed = true;
                         }
-                        boolean isStop = mGyr < 0.003 && mGyr > -0.003;
+                        boolean isStop = mGyr < 0.0025 && mGyr > -0.0025;
                         if (isStop && isSensorOn) {
                             isSensorOn = false;
                             onFinishSensorListen();

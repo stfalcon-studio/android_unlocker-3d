@@ -3,7 +3,6 @@ package com.stfalcon.unlocker;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.graphics.Typeface;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -12,7 +11,6 @@ import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.widget.CompoundButton;
@@ -20,9 +18,9 @@ import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
 
-import com.jjoe64.graphview.GraphView;
-import com.jjoe64.graphview.GraphViewSeries;
-import com.jjoe64.graphview.LineGraphView;
+import com.stfalcon.unlocker.LockGraphView.DataSeries;
+import com.stfalcon.unlocker.LockGraphView.GraphData;
+import com.stfalcon.unlocker.LockGraphView.LockGraphView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,9 +28,10 @@ import java.util.List;
 
 public class MainActivity extends Activity implements SensorEventListener, View.OnClickListener {
 
-    public static String MY_PREF = "my_pref";
+    public static final String MY_PREF = "my_pref";
     SensorManager sensorManager = null;
     LinearLayout ll_graph;
+    LockGraphView lockGraphView;
     private View ll_record;
     private View ll_start_stop;
     private View rl_create;
@@ -48,18 +47,16 @@ public class MainActivity extends Activity implements SensorEventListener, View.
     boolean isGestureCorrect;
     boolean isTryAgain;
 
-    GraphViewSeries rollSaveDataSeries;
-    GraphView graphView;
     double startTime;
     boolean isSensorOn = false;
     boolean isPressed = false;
     boolean toConfirm = false;
     boolean isGestureNotCorrect;
-    ArrayList<Double> masShow = new ArrayList<Double>();
-    ArrayList<Double> masSave = new ArrayList<Double>();
-    ArrayList<Double> masConfirm = new ArrayList<Double>();
-    ArrayList<double[]> accDataList = new ArrayList<double[]>();
-    ArrayList<double[]> gyrDataList = new ArrayList<double[]>();
+    final ArrayList<Double> masShow = new ArrayList<Double>();
+    final ArrayList<Double> masSave = new ArrayList<Double>();
+    final ArrayList<Double> masConfirm = new ArrayList<Double>();
+    final ArrayList<double[]> accDataList = new ArrayList<double[]>();
+    final ArrayList<double[]> gyrDataList = new ArrayList<double[]>();
     ArrayList<double[]> filterDataList = new ArrayList<double[]>();
     private Switch on_off;
     private Activity context;
@@ -81,7 +78,6 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         startService(new Intent(this, LockService.class));
         viewToNotCreated();
     }
-
 
     /**
      * Инициализация всех view
@@ -131,18 +127,8 @@ public class MainActivity extends Activity implements SensorEventListener, View.
      * Инициализация поля отображающего графики
      */
     public void initGraph() {
-        graphView = new LineGraphView(this, "Saved");
-        graphView.setBackground(null);
-        graphView.getGraphViewStyle().setGridColor(getResources().getColor(android.R.color.transparent));
-        graphView.getGraphViewStyle().setHorizontalLabelsColor(getResources().getColor(android.R.color.transparent));
-        graphView.getGraphViewStyle().setNumHorizontalLabels(0);
-        graphView.getGraphViewStyle().setNumVerticalLabels(0);
-        graphView.getGraphViewStyle().setVerticalLabelsColor(getResources().getColor(android.R.color.transparent));
-        graphView.getGraphViewStyle().setVerticalLabelsWidth(0);
-        graphView.setPadding(-20, 0, 0, 0);
-        graphView.getGraphViewStyle().setTextSize(0);
-        graphView.setScalable(true);
-        graphView.setManualYAxisBounds(2.5, -2.5);
+        lockGraphView = new LockGraphView(this);
+        lockGraphView.setMaxMin(50, 2.5, 0, -2.5);
     }
 
     private void viewToRecordGesture() {
@@ -271,14 +257,6 @@ public class MainActivity extends Activity implements SensorEventListener, View.
                     }
                     return;
                 }
-                /*if (isGestureRecord) {
-                    viewToCheckGesture();
-                    startConfirmGesture();
-                    viewToValidating();
-                    isConfirmGesture = false;
-                    isValidation = true;
-                    return;
-                }*/
                 if (isGestureNotCorrect) {
                     startConfirmGesture();
                     viewToValidating();
@@ -348,11 +326,6 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         super.onResume();
         sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_GAME);
         sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_GAME);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
     }
 
     @Override
@@ -451,7 +424,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
     public boolean validating() {
         boolean isValid = false;
         ll_graph.removeAllViews();
-
+        DataSeries rollSaveDataSeries = null;
         filterDataList = filterData();
         double[] pArr = new double[filterDataList.size()];
         for (int i = 0; i < filterDataList.size(); i++) {
@@ -470,54 +443,39 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         }
         pArr = pList.get(0);
         rArr = pList.get(1);
-        GraphView.GraphViewData[] rollGraphViewData = new GraphView.GraphViewData[rArr.length];
+        GraphData[] rollGraphViewData = new GraphData[rArr.length];
         for (int i = 0; i < rArr.length; i++) {
-            rollGraphViewData[i] = new GraphView.GraphViewData(i, rArr[i]);
+            rollGraphViewData[i] = new GraphData(i, rArr[i]);
         }
-        GraphViewSeries rollDataSeries;
+        DataSeries rollDataSeries;
         if (isStartRecording) {
-            rollDataSeries = new GraphViewSeries("roll",
-                    new GraphViewSeries.GraphViewSeriesStyle(
-                            getResources().getColor(R.color.green_line),
-                            getResources().getDimensionPixelSize(R.dimen.line_width)), rollGraphViewData);
+            rollDataSeries = new DataSeries(rollGraphViewData);
+            rollDataSeries.setLineStyle(getResources().getColor(R.color.green_line), getResources().getDimension(R.dimen.line_width));
         } else {
-            rollDataSeries = new GraphViewSeries("roll",
-                    new GraphViewSeries.GraphViewSeriesStyle(
-                            getResources().getColor(R.color.white_line),
-                            getResources().getDimensionPixelSize(R.dimen.line_width)), rollGraphViewData);
+            rollDataSeries = new DataSeries(rollGraphViewData);
+            rollDataSeries.setLineStyle(getResources().getColor(R.color.white_line), getResources().getDimension(R.dimen.line_width));
         }
 
         boolean isSave = UnlockApp.sPref.getBoolean("isSave", false);
 
         if (isSave) {
             double saveRoll[] = UnlockApp.loadArrays().get(1);
-            GraphView.GraphViewData[] rollGraphViewsaveData = new GraphView.GraphViewData[saveRoll.length];
+            GraphData[] rollGraphViewSaveData = new GraphData[saveRoll.length];
             for (int i = 0; i < saveRoll.length; i++) {
-                rollGraphViewsaveData[i] = new GraphView.GraphViewData(i, saveRoll[i]);
+                rollGraphViewSaveData[i] = new GraphData(i, saveRoll[i]);
             }
-            rollSaveDataSeries = new GraphViewSeries("roll1", new GraphViewSeries.GraphViewSeriesStyle(
-                    getResources().getColor(R.color.yellow_line),
-                    getResources().getDimensionPixelSize(R.dimen.line_width)), rollGraphViewsaveData);
+            rollSaveDataSeries = new DataSeries(rollGraphViewSaveData);
+            rollSaveDataSeries.setLineStyle(getResources().getColor(R.color.yellow_line), getResources().getDimension(R.dimen.line_width));
         }
+        LockGraphView graphView = new LockGraphView(this);
+        graphView.setMaxMin(0.0008, -0.0008);
+        graphView.setData(new DataSeries[]{rollDataSeries}); // data
 
-        GraphView graphView = new LineGraphView(
-                this // context
-                , "New Gesture" // heading
-        );
-        graphView.setBackground(null);
-        graphView.getGraphViewStyle().setGridColor(getResources().getColor(android.R.color.transparent));
-        graphView.getGraphViewStyle().setHorizontalLabelsColor(getResources().getColor(android.R.color.transparent));
-        graphView.getGraphViewStyle().setNumHorizontalLabels(0);
-        graphView.getGraphViewStyle().setNumVerticalLabels(0);
-        graphView.getGraphViewStyle().setVerticalLabelsColor(getResources().getColor(android.R.color.transparent));
-        graphView.getGraphViewStyle().setVerticalLabelsWidth(0);
-        graphView.setPadding(-50, 0, 0, 0);
-        graphView.getGraphViewStyle().setTextSize(0);
-        graphView.addSeries(rollDataSeries); // data
         if (isSave) {
             double savePitch[] = UnlockApp.loadArrays().get(0);
             double saveRoll[] = UnlockApp.loadArrays().get(1);
-            graphView.addSeries(rollSaveDataSeries);
+            graphView.setMaxMin(0.0008, -0.0008);
+            graphView.setData(new DataSeries[]{rollDataSeries, rollSaveDataSeries});
             double[] x = pArr;
             double[] x1 = savePitch;
             double[] y = rArr;
@@ -572,18 +530,15 @@ public class MainActivity extends Activity implements SensorEventListener, View.
      */
     private void showOnGraph(ArrayList<Double> mas) {
         ll_graph.removeAllViews();
-        GraphView.GraphViewData[] accGraphViewSaveData = new GraphView.GraphViewData[mas.size()];
+        GraphData[] accGraphViewSaveData = new GraphData[mas.size()];
         for (int i = 0; i < mas.size(); i++) {
-            accGraphViewSaveData[i] = new GraphView.GraphViewData(i, mas.get(i));
+            accGraphViewSaveData[i] = new GraphData(i, mas.get(i));
         }
-        GraphViewSeries accGraphViewSeries1 = new GraphViewSeries("acc", new GraphViewSeries.GraphViewSeriesStyle(Color.BLACK, 4), accGraphViewSaveData);
-        GraphViewSeries accGraphViewSeries = new GraphViewSeries("acc",
-                new GraphViewSeries.GraphViewSeriesStyle(getResources().getColor(R.color.green_line),
-                        getResources().getDimensionPixelSize(R.dimen.line_width)), accGraphViewSaveData);
-        graphView.removeAllSeries();
-        graphView.addSeries(accGraphViewSeries1);
-        graphView.addSeries(accGraphViewSeries);
-        ll_graph.addView(graphView);
+        DataSeries[] dataSerieses = new DataSeries[1];
+        dataSerieses[0] = new DataSeries(accGraphViewSaveData);
+        dataSerieses[0].setLineStyle(getResources().getColor(R.color.green_line), 4);
+        lockGraphView.setData(dataSerieses);
+        ll_graph.addView(lockGraphView);
     }
 
     /**
@@ -611,38 +566,25 @@ public class MainActivity extends Activity implements SensorEventListener, View.
      * Опображает график сохраненный в Preferences
      */
     private void showSaveGraph() {
+        DataSeries rollSaveDataSeries = null;
         ll_graph.removeAllViews();
         double[] saveRoll = UnlockApp.loadArrays().get(1);
 
-        GraphView.GraphViewData[] rollGraphViewSaveData = new GraphView.GraphViewData[saveRoll.length];
+        GraphData[] rollGraphViewSaveData = new GraphData[saveRoll.length];
         for (int i = 0; i < saveRoll.length; i++) {
-            rollGraphViewSaveData[i] = new GraphView.GraphViewData(i, saveRoll[i]);
+            rollGraphViewSaveData[i] = new GraphData(i, saveRoll[i]);
         }
-        rollSaveDataSeries = new GraphViewSeries("roll1", new GraphViewSeries.GraphViewSeriesStyle(
-                getResources().getColor(R.color.white_line),
-                getResources().getDimensionPixelSize(R.dimen.line_width)), rollGraphViewSaveData);
-        GraphView graphSaveView = new LineGraphView(
-                this // context
-                , "Saved gesture" // heading
-        );
+        LockGraphView graphSaveView = new LockGraphView(this);
+        rollSaveDataSeries = new DataSeries(rollGraphViewSaveData);
+        rollSaveDataSeries.setLineStyle(getResources().getColor(R.color.white_line), getResources().getDimension(R.dimen.line_width));
         graphSaveView.setBackground(null);
-        graphSaveView.getGraphViewStyle().setGridColor(getResources().getColor(android.R.color.transparent));
-        graphSaveView.getGraphViewStyle().setHorizontalLabelsColor(getResources().getColor(android.R.color.transparent));
-        graphSaveView.getGraphViewStyle().setNumHorizontalLabels(0);
-        graphSaveView.getGraphViewStyle().setNumVerticalLabels(0);
-        graphSaveView.getGraphViewStyle().setVerticalLabelsColor(getResources().getColor(android.R.color.transparent));
-        graphSaveView.getGraphViewStyle().setVerticalLabelsWidth(0);
-        graphSaveView.setPadding(-50, 0, 0, 0);
-        graphSaveView.getGraphViewStyle().setTextSize(0);
-        graphSaveView.setScalable(true);
-        graphSaveView.setManualYAxisBounds(0.0006, -0.0006);
-        graphSaveView.addSeries(rollSaveDataSeries);
+        graphSaveView.setMaxMin(0.0008, -0.0008);
+        graphSaveView.setData(new DataSeries[]{rollSaveDataSeries});
         ll_graph.addView(graphSaveView);
     }
 
     @Override
     public void onBackPressed() {
-        Log.v("LOGER", "" + isStartRecording + isGestureNotCorrect + isConfirmGesture + isValidation + isCheckGesture + isGestureRecord);
         if (isGestureRecord) {
             super.onBackPressed();
         }

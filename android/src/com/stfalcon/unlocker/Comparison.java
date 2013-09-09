@@ -6,7 +6,7 @@ import java.util.List;
 
 
 public class Comparison {
-    static double kFilteringFactor = 0.2;
+    private final static double kFilteringFactor = 0.2;
 
     /**
      * Фильтер убирает низкие частоты
@@ -43,7 +43,7 @@ public class Comparison {
     public static List<double[]> prepareArrays(double[] arrayX, double[] arrayY) {
         try {
             double offset = 0.00009;
-            int len = 0;
+            int len;
             if (arrayX.length > arrayY.length) {
                 len = arrayY.length;
             } else {
@@ -84,7 +84,7 @@ public class Comparison {
      * @return
      */
     public static double pirsonCompare(double[] x, double[] y) {
-        int len = 0;
+        int len;
         if (x.length > y.length) {
             len = y.length;
         } else {

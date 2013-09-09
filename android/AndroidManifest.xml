@@ -8,8 +8,13 @@
             android:minSdkVersion="14"
             android:targetSdkVersion="18"/>
 
+    <uses-feature android:name="android.hardware.sensor.gyroscope"/>
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+
     <application
-            android:debuggable="true"
             android:allowBackup="true"
             android:icon="@drawable/ic_launcher"
             android:label="@string/app_name"
@@ -37,7 +42,6 @@
                 android:label="@string/app_name">
         </activity>
 
-
         <receiver
                 android:name=".LockReceiver"
                 android:process=":unlock"
@@ -61,11 +65,7 @@
                 android:enabled="true">
         </service>
 
+
     </application>
 
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
-    <uses-permission android:name="android.permission.WAKE_LOCK"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 </manifest>

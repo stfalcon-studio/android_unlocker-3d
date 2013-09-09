@@ -26,13 +26,4 @@ public class LockService extends Service {
         BroadcastReceiver mReceiver = new LockReceiver();
         registerReceiver(mReceiver, filter);
     }
-
-    @Override
-    public void onStart(Intent intent, int startId) {
-        try {
-            boolean screenOff = intent.getBooleanExtra("screen_state", false);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 }

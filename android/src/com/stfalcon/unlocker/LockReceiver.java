@@ -23,7 +23,7 @@ public class LockReceiver extends BroadcastReceiver {
         try {
             FileInputStream is = context.openFileInput("active");
             BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-            String line = null;
+            String line;
             while ((line = reader.readLine()) != null) {
                 sb.append(line).append("\n");
             }
@@ -34,12 +34,10 @@ public class LockReceiver extends BroadcastReceiver {
             ex.printStackTrace();
         }
         String result = sb.toString().trim();
-        Log.i("Loger", "File " + result);
 
         // Есле екран выключили, запускаем локскрин
         if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
             if (result.equals("true")) {
-                Log.i("Loger", "UnlockON");
                 Intent intent1 = new Intent(context, UnlockScreen.class);
                 intent1.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(intent1);
@@ -47,13 +45,11 @@ public class LockReceiver extends BroadcastReceiver {
 
         } else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
             if (result.equals("true")) {
-                Log.i("Loger", "UnlockOFF");
             }
         }
 
         //Есле телефон перезапустили, запускаем приложение
         if (("android.intent.action.BOOT_COMPLETED".equals(intent.getAction())) && result.equals("true")) {
-            Log.i("Loger", "UnlockON");
             Intent intent1 = new Intent(context, MainActivity.class);
             intent1.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(intent1);
