@@ -107,7 +107,7 @@ public class UnlockScreen extends Activity implements SensorEventListener, View.
 
     private void viewToUnlockScreen() {
         View rl_unlock_screen = findViewById(R.id.rl_unlock_screen);
-        rl_unlock_screen.setBackground(wallpaperDrawable);
+        rl_unlock_screen.setBackgroundDrawable(wallpaperDrawable);
         rl_unlock_screen.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
         ll_move_to_unlock.setVisibility(View.VISIBLE);
         ll_gesture_not_correct.setVisibility(View.GONE);
@@ -115,7 +115,7 @@ public class UnlockScreen extends Activity implements SensorEventListener, View.
 
     private void viewToGestureNotCorrect() {
         rl_unlock_screen.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
-        rl_unlock_screen.setBackground(getResources().getDrawable(R.drawable.bg_red));
+        rl_unlock_screen.setBackgroundDrawable(getResources().getDrawable(R.drawable.bg_red));
         ll_move_to_unlock.setVisibility((View.GONE));
         ll_gesture_not_correct.setVisibility(View.VISIBLE);
     }

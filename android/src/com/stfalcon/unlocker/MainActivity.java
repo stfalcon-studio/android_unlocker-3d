@@ -135,7 +135,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         rl_create.setVisibility(View.GONE);
         ll_start_stop.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
         ll_start_stop.setVisibility(View.VISIBLE);
-        ll_start_stop.setBackground(getResources().getDrawable(R.drawable.bg_blue));
+        ll_start_stop.setBackgroundDrawable(getResources().getDrawable(R.drawable.bg_blue));
         tv_recording.setText(getString(R.string.main_label_recording));
         tv_tap_to.setText(getString(R.string.label_tap_to_stop));
     }
@@ -152,12 +152,12 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         tv_recording.setText(getString(R.string.label_main_validating));
         tv_tap_to.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
         tv_tap_to.setText(getString(R.string.label_tap_to_stop));
-        ll_start_stop.setBackground(getResources().getDrawable(R.drawable.bg_blue));
+        ll_start_stop.setBackgroundDrawable(getResources().getDrawable(R.drawable.bg_blue));
     }
 
     private void viewToCheckGesture() {
         rl_create.setVisibility(View.GONE);
-        rl_create.setBackground(getResources().getDrawable(R.drawable.bg_blue));
+        rl_create.setBackgroundDrawable(getResources().getDrawable(R.drawable.bg_blue));
         ll_start_stop.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
         ll_start_stop.setVisibility(View.VISIBLE);
         tv_recording.setText(getString(R.string.label_main_check));
@@ -170,8 +170,8 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         ll_start_stop.setVisibility(View.GONE);
         tv_new_gesture.setText(getString(R.string.label_main_just_created));
         tv_tap_to_new.setVisibility(View.GONE);
-        rl_create.setBackground(getResources().getDrawable(R.drawable.bg_green));
-        ll_record.setBackground(null);
+        rl_create.setBackgroundDrawable(getResources().getDrawable(R.drawable.bg_green));
+        ll_record.setBackgroundDrawable(null);
         on_off.setChecked(true);
         ll_record.setOnClickListener(null);
 
@@ -182,8 +182,8 @@ public class MainActivity extends Activity implements SensorEventListener, View.
                 ll_record.setOnClickListener(clickListener);
                 rl_create.startAnimation(AnimationUtils.loadAnimation(context, android.R.anim.fade_in));
                 tv_new_gesture.setText(getString(R.string.label_new_gesture));
-                rl_create.setBackground(getResources().getDrawable(R.drawable.bg_blue));
-                ll_record.setBackground(getResources().getDrawable(R.drawable.gesture_stroke_selector));
+                rl_create.setBackgroundDrawable(getResources().getDrawable(R.drawable.bg_blue));
+                ll_record.setBackgroundDrawable(getResources().getDrawable(R.drawable.gesture_stroke_selector));
                 on_off.setEnabled(true);
             }
         }, 3000);
@@ -195,7 +195,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         ll_start_stop.setVisibility(View.GONE);
         tv_new_gesture.setText(getString(R.string.label_new_gesture));
         rl_create.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
-        ll_record.setBackground(getResources().getDrawable(R.drawable.gesture_stroke_selector));
+        ll_record.setBackgroundDrawable(getResources().getDrawable(R.drawable.gesture_stroke_selector));
         tv_tap_to_new.setVisibility(View.VISIBLE);
     }
 
@@ -204,7 +204,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         tv_recording.setText(getString(R.string.label_main_gesture_not_correct));
         tv_tap_to.setText(getString(R.string.label_tap_try_again));
         ll_start_stop.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
-        ll_start_stop.setBackground(getResources().getDrawable(R.drawable.bg_red));
+        ll_start_stop.setBackgroundDrawable(getResources().getDrawable(R.drawable.bg_red));
     }
 
     private void viewToTryAgain() {
@@ -212,7 +212,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         tv_recording.setText(getString(R.string.labal_try_again));
         tv_tap_to.setText(getString(R.string.label_tap_try_again));
         ll_start_stop.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
-        ll_start_stop.setBackground(getResources().getDrawable(R.drawable.bg_red));
+        ll_start_stop.setBackgroundDrawable(getResources().getDrawable(R.drawable.bg_red));
     }
 
     @Override
@@ -577,7 +577,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         LockGraphView graphSaveView = new LockGraphView(this);
         rollSaveDataSeries = new DataSeries(rollGraphViewSaveData);
         rollSaveDataSeries.setLineStyle(getResources().getColor(R.color.white_line), getResources().getDimension(R.dimen.line_width));
-        graphSaveView.setBackground(null);
+        graphSaveView.setBackgroundDrawable(null);
         graphSaveView.setMaxMin(0.0008, -0.0008);
         graphSaveView.setData(new DataSeries[]{rollSaveDataSeries});
         ll_graph.addView(graphSaveView);
