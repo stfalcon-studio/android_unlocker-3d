@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/rl_unlock_screen"
+                android:background="@drawable/bg_red">
+
+    <LinearLayout
+            android:id="@+id/ll_clock_header"
+            android:layout_marginTop="84dp"
+            android:layout_marginBottom="16dp"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            >
+
+
+        <com.stfalcon.unlocker.DigitalClockHM
+                android:id="@+id/clock"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:textSize="82sp"
+                android:textColor="#ffffff"
+                android:padding="0dp"
+                android:includeFontPadding="false"
+                />
+
+        <TextView android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:id="@+id/tv_date"
+                  android:textSize="14sp"
+                  android:textColor="#ffffff"
+                  android:textStyle="bold"
+                  android:padding="0dp"
+                  android:includeFontPadding="false"
+                />
+    </LinearLayout>
+
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_alignParentBottom="true"
+            android:gravity="center"
+            android:visibility="gone"
+            android:id="@+id/ll_move_to_unlock"
+            >
+        <TextView android:id="@+id/tv_unlock_move"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:text="@string/label_unlock_move_to_unlock"
+                  android:textStyle="bold"
+                  android:alpha="0.25"
+                  android:textSize="14sp"
+                  android:textColor="#ffffff"
+                  android:layout_marginBottom="136dp"
+                />
+
+    </LinearLayout>
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_alignParentBottom="true"
+            android:gravity="center"
+            android:visibility="visible"
+            android:id="@+id/ll_gesture_not_correct"
+            >
+
+        <TextView
+                android:id="@+id/tv_unlock_gesture_not_correct"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_unlock_gesture_not_correct"
+                android:textSize="42sp"
+                android:textColor="#ffffff"
+                android:layout_marginRight="16dp"
+                android:layout_marginLeft="16dp"
+                android:gravity="center"
+
+
+                />
+
+        <TextView
+                android:id="@+id/tv_unlock_tap_try_again"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_tap_try_again"
+                android:textStyle="bold"
+                android:alpha="0.25"
+                android:textSize="14sp"
+                android:textColor="#ffffff"
+                android:layout_marginTop="16dp"
+
+                />
+        <TextView android:id="@+id/tv_unlock_tap_home"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:text="@string/label_tap_to_home"
+                  android:textStyle="bold"
+                  android:alpha="0.25"
+                  android:textSize="14sp"
+                  android:textColor="#ffffff"
+                  android:layout_marginBottom="12dp"
+                  android:layout_marginTop="122dp"
+                />
+    </LinearLayout>
+</RelativeLayout>
