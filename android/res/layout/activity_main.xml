@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:background="@drawable/bg_blue"
+        android:layout_height="match_parent">
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:id="@+id/ll_record_gesture">
+        <LinearLayout
+                android:layout_marginTop="12dp"
+                android:layout_width="match_parent"
+                android:layout_marginBottom="22dp"
+                android:layout_height="200dp"
+                android:id="@+id/ll_graph_view">
+        </LinearLayout>
+
+        <TextView
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:text="@string/main_label_recording"
+                android:textSize="42sp"
+                android:textColor="#ffffff"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:layout_marginRight="16dp"
+                android:layout_marginLeft="16dp"
+                android:layout_marginBottom="16dp"
+                android:id="@+id/tv_main_recording"
+                />
+        <TextView
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:text="@string/label_tap_to_stop"
+                android:textStyle="bold"
+                android:alpha="0.25"
+                android:textSize="14sp"
+                android:textColor="#ffffff"
+                android:layout_gravity="center_horizontal"
+                android:id="@+id/tv_main_tap_to"
+                />
+    </LinearLayout>
+
+
+    <RelativeLayout
+            android:layout_width="match_parent"
+            android:id="@+id/rl_create_gesture"
+            android:layout_height="match_parent">
+        <LinearLayout
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:id="@+id/ll_title"
+                android:orientation="vertical"
+                android:layout_marginBottom="36dp"
+                android:layout_width="match_parent">
+            <TextView
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="22dp"
+                    android:layout_marginBottom="16dp"
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:text="@string/label_main_unlocker"
+                    android:textSize="22dp"
+                    android:textColor="#ffffff"
+                    />
+            <Switch
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:thumb="@drawable/switch_thumb_selector"
+                    android:track="@drawable/switch_bg_selector"
+                    android:layout_gravity="center_horizontal"
+                    android:switchTextAppearance="@style/Switch"
+                    android:textOn="@string/switch_text_on"
+                    android:textOff="@string/switch_text_off"
+                    android:id="@+id/switch_main"
+                    >
+            </Switch>
+
+        </LinearLayout>
+
+
+        <LinearLayout android:orientation="horizontal"
+                      android:layout_height="wrap_content"
+                      android:layout_width="wrap_content"
+                      android:layout_centerHorizontal="true"
+                      android:layout_gravity="center_horizontal"
+                      android:layout_alignParentBottom="true"
+                      android:layout_marginBottom="12dp"
+                      android:id="@+id/ll_copy_right"
+                >
+            <TextView
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:text="@string/label_developed_by"
+                    android:alpha="0.25"
+                    android:textSize="12sp"
+                    android:textColor="#ffffff"
+                    android:drawableRight="@drawable/stfalcon_logo"
+                    />
+            <TextView
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:text="@string/label_stfalcon"
+                    android:alpha="0.25"
+                    android:textSize="12sp"
+                    android:textColor="#ffffff"
+                    />
+
+        </LinearLayout>
+
+        <LinearLayout
+                android:id="@+id/ll_new_gesture"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="12dp"
+                android:layout_width="match_parent"
+                android:layout_below="@id/ll_title"
+                android:gravity="center"
+                android:layout_above="@id/ll_copy_right"
+                android:background="@drawable/gesture_stroke_selector">
+            <TextView
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:text="@string/label_new_gesture"
+                    android:textSize="42sp"
+                    android:textColor="#ffffff"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:layout_marginBottom="16dp"
+                    android:id="@+id/tv_main_new_gesture"
+                    android:layout_marginRight="16dp"
+                    android:layout_marginLeft="16dp"
+                    />
+            <TextView
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:text="@string/label_tap_start"
+                    android:textStyle="bold"
+                    android:alpha="0.25"
+                    android:textSize="14sp"
+                    android:textColor="#ffffff"
+                    android:layout_gravity="center_horizontal"
+                    android:id="@+id/tv_main_tap_to_new"
+                    />
+        </LinearLayout>
+    </RelativeLayout>
+
+</FrameLayout>

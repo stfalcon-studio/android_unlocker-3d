@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Unlocker 3D</string>
+    <string name="try_again">Try again...</string>
+    <string name="label_main_unlocker">Unlocker 3D</string>
+    <string name="label_tap_start">TAP TO START</string>
+    <string name="label_new_gesture">New Gesture</string>
+    <string name="label_developed_by">Developed by</string>
+    <string name="label_stfalcon">stfalcon.com</string>
+    <string name="main_label_recording">Recording</string>
+    <string name="label_tap_to_stop">TAP TO STOP</string>
+    <string name="label_tap_to_home">TAP HOME BUTTON TO SKIP</string>
+    <string name="label_tap_try_again">TAP TO TRY AGAIN</string>
+    <string name="label_unlock_gesture_not_correct">Gesture isn\'t correct</string>
+    <string name="label_main_confirm_gesture">Confirm gesture</string>
+    <string name="label_main_validating">Validating</string>
+    <string name="label_main_just_created">Gesture just created</string>
+    <string name="label_main_check">Check gesture</string>
+    <string name="label_main_gesture_not_correct">Gesture isn\'t correct</string>
+    <string name="label_unlock_move_to_unlock">MOVE TO UNLOCK</string>
+    <string name="switch_text_on">ON</string>
+    <string name="switch_text_off">OFF</string>
+    <string name="labal_try_again">Try again</string>
+
+</resources>
