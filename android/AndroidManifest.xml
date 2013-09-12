@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.stfalcon.unlocker"
+          android:versionCode="3"
+          android:versionName="0.1.2">
+
+    <uses-sdk
+            android:minSdkVersion="14"
+            android:targetSdkVersion="18"/>
+
+    <uses-feature android:name="android.hardware.sensor.gyroscope"/>
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+
+    <application
+            android:allowBackup="true"
+            android:icon="@drawable/ic_launcher"
+            android:label="@string/app_name"
+            android:name=".UnlockApp"
+            android:theme="@style/AppTheme">
+        <activity
+                android:name="com.stfalcon.unlocker.MainActivity"
+                android:screenOrientation="portrait"
+                android:process=":unlock"
+                android:excludeFromRecents="true"
+                android:launchMode="singleTask"
+                android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+                android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <activity
+                android:name="com.stfalcon.unlocker.UnlockScreen"
+                android:screenOrientation="portrait"
+                android:process=":unlock"
+                android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+                android:excludeFromRecents="true"
+                android:launchMode="singleTask"
+                android:label="@string/app_name">
+        </activity>
+
+        <receiver
+                android:name=".LockReceiver"
+                android:process=":unlock"
+                android:enabled="true"
+                android:exported="true"
+                android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+
+            <intent-filter>
+                <action android:name="android.intent.action.ACTION_SCREEN_ON"></action>
+                <action android:name="android.intent.action.ACTION_SCREEN_OFF"></action>
+                <action android:name="com.stfalcon.unlocker.ACTIVE"></action>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+
+
+            </intent-filter>
+        </receiver>
+
+        <service
+                android:name=".LockService"
+                android:enabled="true">
+        </service>
+
+
+    </application>
+
+</manifest>
