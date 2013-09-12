@@ -3,6 +3,8 @@
 *.ap_
 *.jar
 
+
+
 # files for the dex VM
 *.dex
 
@@ -16,6 +18,9 @@ gen/
 key/
 
 # Local configuration file (sdk path,  etc)
+
+bin/
+gen/
 local.properties
 
 # Eclipse project files
