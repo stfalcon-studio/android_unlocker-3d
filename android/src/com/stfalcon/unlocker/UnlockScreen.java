@@ -93,6 +93,8 @@ public class UnlockScreen extends Activity implements SensorEventListener, View.
     @Override
     protected void onResume() {
         super.onResume();
+        viewToUnlockScreen();
+        isUnlockScreen = true;
         sensorManager.registerListener(listener, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_GAME);
         sensorManager.registerListener(listener, sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_GAME);
         isSensorOn = false;
