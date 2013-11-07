@@ -211,7 +211,13 @@ public class UnlockScreen extends Activity implements SensorEventListener, View.
         }
         if (unlock) {
             UnlockApp.keyguardLock.disableKeyguard();
-            finish();
+            Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.addCategory(Intent.CATEGORY_HOME);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            sensorManager.unregisterListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER));
+            sensorManager.unregisterListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE));
+
         } else {
             viewToGestureNotCorrect();
             isUnlockScreen = false;
