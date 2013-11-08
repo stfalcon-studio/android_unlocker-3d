@@ -587,6 +587,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
     public void onBackPressed() {
         if (isGestureRecord) {
             super.onBackPressed();
+
         }
         if (isStartRecording || isGestureNotCorrect || isConfirmGesture || isValidation || isCheckGesture) {
             viewToNotCreated();
@@ -601,6 +602,11 @@ public class MainActivity extends Activity implements SensorEventListener, View.
             }
             isGestureRecord = false;
             return;
+        } else {
+            Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.addCategory(Intent.CATEGORY_HOME);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
         }
         super.onBackPressed();
     }
